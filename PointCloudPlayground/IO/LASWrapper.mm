@@ -24,7 +24,8 @@
   laszip_header* header;
   laszip_get_header_pointer(reader, &header);
   
-  int numPoints = (int)header->extended_number_of_point_records;
+  int numPoints = (int)header->number_of_point_records;
+  if (numPoints == 0) numPoints = (int)header->extended_number_of_point_records;
   *outCount = numPoints;
   
   // Allocate buffer
@@ -40,9 +41,9 @@
     
     // LASzip C API handles the scaling/offset logic inside get_x/y/z
     // if you use the header values, but here we do it manually:
-    pointBuffer[i*3 + 0] = (float)(point->X * header->x_scale_factor + header->x_offset);
-    pointBuffer[i*3 + 1] = (float)(point->Y * header->y_scale_factor + header->y_offset);
-    pointBuffer[i*3 + 2] = (float)(point->Z * header->z_scale_factor + header->z_offset);
+    pointBuffer[i*3 + 0] = (float)(point->X * header->x_scale_factor);
+    pointBuffer[i*3 + 1] = (float)(point->Y * header->y_scale_factor);
+    pointBuffer[i*3 + 2] = (float)(point->Z * header->z_scale_factor);
   }
   
   laszip_close_reader(reader);

@@ -8,32 +8,25 @@
 import Foundation
 import simd
 
+struct PointCloudBuffer {
+  var pointCount: Int32
+  /// The  buffer is composed of coordinates (x, y, z, x, y, z, ...)
+  /// Warning: Simd3 is physically 4 float4 (cannot be casted directly)
+  var buffer: Data
+}
+
 class PointCloudLoader {
   let wrapper = LASWrapper()
   
-  func loadLazFile(at path: String) -> [SIMD3<Float>]? {
-    var count: Int32 = 0
+  /// The returned Data is a buffer of coordinates (x, y, z, x, y, z, ...)
+  func loadLazFile(at path: String) -> PointCloudBuffer? {
+    var pointCount: Int32 = 0
     
-    guard let data = wrapper.loadPoints(fromPath: path, count: &count) else {
+    guard let rawData = wrapper.loadPoints(fromPath: path, count: &pointCount) else {
       return nil
     }
     
-    // 1. Convert Data to a simple array of Floats (no padding issues)
-    let floatCount = Int(count) * 3
-    let floats = data.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) -> [Float] in
-      let baseAddress = pointer.bindMemory(to: Float.self)
-      return Array(baseAddress.prefix(floatCount))
-    }
-    
-    // 2. Map the flat Float array into SIMD3
-    var points: [SIMD3<Float>] = []
-    points.reserveCapacity(Int(count))
-    
-    for i in stride(from: 0, to: floats.count, by: 3) {
-      points.append(SIMD3<Float>(floats[i], floats[i+1], floats[i+2]))
-    }
-    
-    print("Requested \(count) points. Correctly parsed \(points.count) points.")
-    return points
+    print("Buffer contains \(pointCount) points")
+    return PointCloudBuffer(pointCount: pointCount, buffer: rawData)
   }
 }

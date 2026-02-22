@@ -1,8 +1,12 @@
 import SwiftUI
 import MetalKit
 import AppKit
+import simd
 
 struct MetalView: NSViewRepresentable {
+  let selectedFilePath: String?
+  let selectedColor: SIMD3<Float>?
+
   func makeNSView(context: Context) -> OrbitMTKView {
     let mtkView = OrbitMTKView(frame: .zero)
     mtkView.preferredFramesPerSecond = 60
@@ -21,10 +25,13 @@ struct MetalView: NSViewRepresentable {
       renderer?.startInertia()
     }
     context.coordinator.renderer = renderer
+    context.coordinator.updateSelection(filePath: selectedFilePath, color: selectedColor)
     return mtkView
   }
   
-  func updateNSView(_ nsView: OrbitMTKView, context: Context) {}
+  func updateNSView(_ nsView: OrbitMTKView, context: Context) {
+    context.coordinator.updateSelection(filePath: selectedFilePath, color: selectedColor)
+  }
   
   func makeCoordinator() -> Coordinator {
     Coordinator()
@@ -32,6 +39,26 @@ struct MetalView: NSViewRepresentable {
   
   final class Coordinator {
     var renderer: MetalRenderer?
+    private var lastFilePath: String?
+    private var lastColor: SIMD3<Float>?
+
+    func updateSelection(filePath: String?, color: SIMD3<Float>?) {
+      guard lastFilePath != filePath || lastColor != color else {
+        return
+      }
+
+      lastFilePath = filePath
+      lastColor = color
+
+      guard let renderer,
+            let filePath,
+            let color else {
+//        renderer?.clearPointCloud()
+        return
+      }
+
+//      renderer.loadPointCloud(at: filePath, color: color)
+    }
   }
 }
 
