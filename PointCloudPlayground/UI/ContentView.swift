@@ -78,6 +78,11 @@ struct ContentView: View {
             pendingLoadFilePath = selectedCloud.filePath
             loadRequestID += 1
           }
+          
+          Button("Remove", role: .destructive) {
+            modelContext.delete(selectedCloud)
+            selectedPath = nil
+          }
         }
 
         Divider()

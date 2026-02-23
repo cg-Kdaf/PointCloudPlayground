@@ -76,10 +76,18 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     orbitCamera.orbit(deltaX: deltaX, deltaY: deltaY)
   }
   
+  func moveTarget(deltaX: Float, deltaY: Float) {
+    orbitCamera.moveTarget(deltaX: deltaX, deltaY: deltaY)
+  }
+  
   func startInertia() {
     orbitCamera.startInertia()
   }
-
+  
+  func zoom(delta: Float) {
+    orbitCamera.zoom(delta: delta)
+  }
+  
   func loadCloud(filepath: String) {
     pointCloudData = loader.loadLazFile(at: filepath)
     

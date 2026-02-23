@@ -3,7 +3,7 @@ using namespace metal;
 
 struct VertexIn {
   float3 position;
-//  float3 color;
+  //  float3 color;
 };
 
 struct CameraUniforms {
@@ -25,10 +25,10 @@ vertex VertexOut basic_vertex(const device float3 *vertices [[buffer(0)]],
                               constant CameraUniforms &camera [[buffer(1)]],
                               uint vertexID [[vertex_id]]) {
   VertexOut out;
-  float4 worldPosition = float4(vertices[vertexID].xzy / 100.0, 1.0);
+  float4 worldPosition = float4(vertices[vertexID].xzy, 1.0);
   out.position = camera.viewProjectionMatrix * worldPosition;
-  out.color = float4(float3(worldPosition.y / 4.0 + 0.5), 1.0);
-  out.point_size = 3.0;
+  out.color = float4(float3(worldPosition.y / 80.0 + 0.5), 1.0);
+  out.point_size = 600.0 / (length(out.position) + 0.01);
   return out;
 }
 

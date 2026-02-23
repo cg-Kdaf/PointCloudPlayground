@@ -3,6 +3,8 @@ import simd
 
 // Half time in seconds
 fileprivate let intertiaHalfLife: Float = 0.1
+fileprivate let nearCamera: Float = 1.0
+fileprivate let farCamera: Float = 3000.0
 
 struct CameraUniforms {
   var viewProjectionMatrix: simd_float4x4
@@ -14,9 +16,13 @@ final class OrbitCamera {
   private var pitch: Float = 0.4
   private var yaw_speed: Float = 0.0
   private var pitch_speed: Float = 0.0
-  private var radius: Float = 10.0
+  private var radius: Float = 30.0
+  private var radius_speed: Float = 0.0
+  private var target = SIMD3<Float>(0, 0, 0)
+  private var target_speed = SIMD3<Float>(0, 0, 0)
+  private let minRadius: Float = nearCamera
+  private let maxRadius: Float = farCamera
   private var freeOrbit: Bool = false
-  private let target = SIMD3<Float>(0, 0, 0)
   
   init(aspectRatio: Float) {
     self.aspectRatio = aspectRatio
@@ -35,19 +41,30 @@ final class OrbitCamera {
   func updateOrbit() {
     if !freeOrbit {return}
     let dt: Float = 0.016
-    if (yaw_speed != 0.0 && pitch_speed != 0.0) {
+    if (yaw_speed != 0.0 || pitch_speed != 0.0 || radius_speed != 0.0 || length(target_speed) > 0.0) {
       // Speed is not null, continue to make the orbit evolve
       yaw += yaw_speed * dt
       pitch += pitch_speed * dt
+      radius += radius_speed * dt
+      radius = min(maxRadius, max(minRadius, radius))
+      target += target_speed * dt
       
       // Exponential decay
       yaw_speed *= pow(0.5, dt / intertiaHalfLife)
       pitch_speed *= pow(0.5, dt / intertiaHalfLife)
+      radius_speed *= pow(0.5, dt / intertiaHalfLife)
+      target_speed *= pow(0.5, dt / intertiaHalfLife)
       if (abs(yaw_speed) < 0.01) {
         yaw_speed = 0.0
       }
       if (abs(pitch_speed) < 0.01) {
         pitch_speed = 0.0
+      }
+      if (abs(radius_speed) < 0.01) {
+        radius_speed = 0.0
+      }
+      if (length(target_speed) < 0.01) {
+        target_speed = SIMD3<Float>(0, 0, 0)
       }
       clampOrbit()
     }
@@ -65,8 +82,42 @@ final class OrbitCamera {
     freeOrbit = false
   }
   
+  func moveTarget(deltaX: Float, deltaY: Float) {
+    let dt: Float = 0.016
+    let sensitivity: Float = 0.01
+    
+    // Compute camera's right and up vectors
+    let forward = simd_normalize(SIMD3<Float>(
+      cos(pitch) * sin(yaw),
+      sin(pitch),
+      cos(pitch) * cos(yaw)
+    ))
+    let worldUp = SIMD3<Float>(0, 1, 0)
+    let right = simd_normalize(simd_cross(worldUp, forward))
+    let up = simd_cross(forward, right)
+    
+    // Movement scaled by radius for natural feel at different zoom levels
+    let movement = (right * deltaX + up * deltaY) * radius * 0.1
+    
+    target += movement * sensitivity
+    // A bit of filtering of the speed
+    target_speed = target_speed * 0.7 + 0.3 * movement * sensitivity / dt
+    freeOrbit = false
+  }
+  
   func startInertia() {
     freeOrbit = true
+  }
+  
+  func zoom(delta: Float) {
+    let dt: Float = 0.016
+    let sensitivity: Float = 0.02
+    let radiusDelta = delta * sensitivity
+    radius += radiusDelta
+    radius = min(maxRadius, max(minRadius, radius))
+    // A bit of filtering of the speed
+    radius_speed = radius_speed * 0.7 + 0.3 * radiusDelta / dt
+    freeOrbit = false
   }
   
   func makeUniforms() -> CameraUniforms {
@@ -78,9 +129,9 @@ final class OrbitCamera {
     
     let projection = simd_float4x4.perspectiveFovRH(fovY: 60.0 * (.pi / 180.0),
                                                     aspect: aspectRatio,
-                                                    nearZ: 0.1,
-                                                    farZ: 100.0)
-    let viewMatrix = simd_float4x4.lookAtRH(eye: cameraPosition,
+                                                    nearZ: nearCamera,
+                                                    farZ: farCamera)
+    let viewMatrix = simd_float4x4.lookAtRH(eye: cameraPosition + target,
                                             center: target,
                                             up: SIMD3<Float>(0, 1, 0))
     return CameraUniforms(viewProjectionMatrix: projection * viewMatrix)
