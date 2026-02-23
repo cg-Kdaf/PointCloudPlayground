@@ -6,6 +6,8 @@ import simd
 struct MetalView: NSViewRepresentable {
   let selectedFilePath: String?
   let selectedColor: SIMD3<Float>?
+  let loadRequestID: Int
+  let loadFilepath: String?
 
   func makeNSView(context: Context) -> OrbitMTKView {
     let mtkView = OrbitMTKView(frame: .zero)
@@ -26,11 +28,13 @@ struct MetalView: NSViewRepresentable {
     }
     context.coordinator.renderer = renderer
     context.coordinator.updateSelection(filePath: selectedFilePath, color: selectedColor)
+    context.coordinator.updateLoadRequest(requestID: loadRequestID, filepath: loadFilepath)
     return mtkView
   }
   
   func updateNSView(_ nsView: OrbitMTKView, context: Context) {
     context.coordinator.updateSelection(filePath: selectedFilePath, color: selectedColor)
+    context.coordinator.updateLoadRequest(requestID: loadRequestID, filepath: loadFilepath)
   }
   
   func makeCoordinator() -> Coordinator {
@@ -41,6 +45,7 @@ struct MetalView: NSViewRepresentable {
     var renderer: MetalRenderer?
     private var lastFilePath: String?
     private var lastColor: SIMD3<Float>?
+    private var lastLoadRequestID: Int?
 
     func updateSelection(filePath: String?, color: SIMD3<Float>?) {
       guard lastFilePath != filePath || lastColor != color else {
@@ -58,6 +63,21 @@ struct MetalView: NSViewRepresentable {
       }
 
 //      renderer.loadPointCloud(at: filePath, color: color)
+    }
+
+    func updateLoadRequest(requestID: Int, filepath: String?) {
+      guard lastLoadRequestID != requestID else {
+        return
+      }
+
+      lastLoadRequestID = requestID
+
+      guard let renderer,
+            let filepath else {
+        return
+      }
+
+      renderer.loadCloud(filepath: filepath)
     }
   }
 }

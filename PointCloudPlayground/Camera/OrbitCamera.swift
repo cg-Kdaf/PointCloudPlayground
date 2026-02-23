@@ -14,7 +14,7 @@ final class OrbitCamera {
   private var pitch: Float = 0.4
   private var yaw_speed: Float = 0.0
   private var pitch_speed: Float = 0.0
-  private var radius: Float = 4.0
+  private var radius: Float = 10.0
   private var freeOrbit: Bool = false
   private let target = SIMD3<Float>(0, 0, 0)
   

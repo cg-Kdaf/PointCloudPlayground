@@ -9,6 +9,9 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
   private let cubeMesh: CubeMesh
   private let cameraBuffer: MTLBuffer
   private let orbitCamera: OrbitCamera
+  private let loader: PointCloudLoader = .init()
+  private var pointCloudData: PointCloudBuffer? = nil
+  private var pointCloudBuffer: MTLBuffer? = nil
   
   init?(mtkView: MTKView) {
     guard let device = MTLCreateSystemDefaultDevice() else {
@@ -76,6 +79,18 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
   func startInertia() {
     orbitCamera.startInertia()
   }
+
+  func loadCloud(filepath: String) {
+    pointCloudData = loader.loadLazFile(at: filepath)
+    
+    guard let pointCloudData else { return }
+    
+    pointCloudData.buffer.withUnsafeBytes {
+      pointCloudBuffer = commandQueue.device.makeBuffer(bytes: $0,
+                                                        length: pointCloudData.buffer.count,
+                                                        options: .storageModeShared)
+    }
+  }
   
   func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
     orbitCamera.setDrawableSize(size)
@@ -92,18 +107,28 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     var cameraUniforms = orbitCamera.makeUniforms()
     cameraBuffer.contents().copyMemory(from: &cameraUniforms, byteCount: MemoryLayout<CameraUniforms>.stride)
     
-    renderEncoder.setRenderPipelineState(pipelineState)
-    renderEncoder.setDepthStencilState(depthStencilState)
-    renderEncoder.setCullMode(.back)
-    renderEncoder.setFrontFacing(.counterClockwise)
-    renderEncoder.setVertexBuffer(cubeMesh.vertexBuffer, offset: 0, index: 0)
-    renderEncoder.setVertexBuffer(cameraBuffer, offset: 0, index: 1)
-    renderEncoder.drawIndexedPrimitives(type: .triangle,
-                                        indexCount: cubeMesh.indexCount,
-                                        indexType: .uint16,
-                                        indexBuffer: cubeMesh.indexBuffer,
-                                        indexBufferOffset: 0)
-    renderEncoder.endEncoding()
+    if let pointCloudBuffer, let pointCloudData {
+      renderEncoder.setRenderPipelineState(pipelineState)
+      renderEncoder.setDepthStencilState(depthStencilState)
+      // Pass the buffer we created from NSData
+      renderEncoder.setVertexBuffer(pointCloudBuffer, offset: 0, index: 0)
+      renderEncoder.setVertexBuffer(cameraBuffer, offset: 0, index: 1)
+      renderEncoder.drawPrimitives(type: .point, vertexStart: 0, vertexCount: Int(pointCloudData.pointCount))
+      renderEncoder.endEncoding()
+    } else {
+      renderEncoder.setRenderPipelineState(pipelineState)
+      renderEncoder.setDepthStencilState(depthStencilState)
+      renderEncoder.setCullMode(.back)
+      renderEncoder.setFrontFacing(.counterClockwise)
+      renderEncoder.setVertexBuffer(cubeMesh.vertexBuffer, offset: 0, index: 0)
+      renderEncoder.setVertexBuffer(cameraBuffer, offset: 0, index: 1)
+      renderEncoder.drawIndexedPrimitives(type: .triangle,
+                                          indexCount: cubeMesh.indexCount,
+                                          indexType: .uint16,
+                                          indexBuffer: cubeMesh.indexBuffer,
+                                          indexBufferOffset: 0)
+      renderEncoder.endEncoding()
+    }
     
     commandBuffer.present(drawable)
     commandBuffer.commit()

@@ -29,8 +29,11 @@
   *outCount = numPoints;
   
   // Allocate buffer
-  size_t bufferSize = numPoints * 3 * sizeof(float);
+  size_t bufferSize = numPoints * 4 * sizeof(float);
   float* pointBuffer = (float*)malloc(bufferSize);
+  const double medium_x = (header->max_x - header->min_x) / 2.0 + header->min_x;
+  const double medium_y = (header->max_y - header->min_y) / 2.0 + header->min_y;
+  const double medium_z = (header->max_z - header->min_z) / 2.0 + header->min_z;
   
   // Prepare to read points
   laszip_point* point;
@@ -41,9 +44,14 @@
     
     // LASzip C API handles the scaling/offset logic inside get_x/y/z
     // if you use the header values, but here we do it manually:
-    pointBuffer[i*3 + 0] = (float)(point->X * header->x_scale_factor);
-    pointBuffer[i*3 + 1] = (float)(point->Y * header->y_scale_factor);
-    pointBuffer[i*3 + 2] = (float)(point->Z * header->z_scale_factor);
+    double worldX = point->X * header->x_scale_factor + header->x_offset;
+    double worldY = point->Y * header->y_scale_factor + header->y_offset;
+    double worldZ = point->Z * header->z_scale_factor + header->z_offset;
+    
+    pointBuffer[i*4 + 0] = (float)(worldX - medium_x);
+    pointBuffer[i*4 + 1] = (float)(worldY - medium_y);
+    pointBuffer[i*4 + 2] = (float)(worldZ - medium_z);
+    pointBuffer[i*4 + 3] = 0.0;
   }
   
   laszip_close_reader(reader);

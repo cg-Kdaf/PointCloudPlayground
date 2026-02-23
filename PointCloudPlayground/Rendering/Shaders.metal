@@ -3,28 +3,35 @@ using namespace metal;
 
 struct VertexIn {
   float3 position;
-  float3 color;
+//  float3 color;
 };
 
 struct CameraUniforms {
   float4x4 viewProjectionMatrix;
 };
 
+//struct VertexOut {
+//  float4 position [[position]];
+//  float3 color;
+//};
+
 struct VertexOut {
   float4 position [[position]];
-  float3 color;
+  float point_size [[point_size]]; // Tells Metal how big the dot should be
+  float4 color;
 };
 
-vertex VertexOut basic_vertex(const device VertexIn *vertices [[buffer(0)]],
+vertex VertexOut basic_vertex(const device float3 *vertices [[buffer(0)]],
                               constant CameraUniforms &camera [[buffer(1)]],
                               uint vertexID [[vertex_id]]) {
   VertexOut out;
-  float4 worldPosition = float4(vertices[vertexID].position, 1.0);
+  float4 worldPosition = float4(vertices[vertexID].xzy / 100.0, 1.0);
   out.position = camera.viewProjectionMatrix * worldPosition;
-  out.color = vertices[vertexID].color;
+  out.color = float4(float3(worldPosition.y / 4.0 + 0.5), 1.0);
+  out.point_size = 3.0;
   return out;
 }
 
 fragment float4 basic_fragment(VertexOut in [[stage_in]]) {
-  return float4(in.color, 1.0);
+  return in.color;
 }

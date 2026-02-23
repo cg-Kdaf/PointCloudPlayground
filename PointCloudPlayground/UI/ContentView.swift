@@ -46,6 +46,8 @@ struct ContentView: View {
 
   @State private var selectedPath: String?
   @State private var isImporterPresented = false
+  @State private var pendingLoadFilePath: String?
+  @State private var loadRequestID = 0
   private let newCloudColor = Color.white
 
   private let lazType = UTType(filenameExtension: "laz") ?? .data
@@ -71,6 +73,11 @@ struct ContentView: View {
 
         if let selectedCloud {
           ColorPicker("Color", selection: colorBinding(for: selectedCloud))
+          
+          Button("Load Cloud") {
+            pendingLoadFilePath = selectedCloud.filePath
+            loadRequestID += 1
+          }
         }
 
         Divider()
@@ -87,7 +94,9 @@ struct ContentView: View {
       Divider()
 
       MetalView(selectedFilePath: selectedCloud?.filePath,
-                selectedColor: selectedCloud?.simdColor)
+                selectedColor: selectedCloud?.simdColor,
+                loadRequestID: loadRequestID,
+                loadFilepath: pendingLoadFilePath)
     }
     .fileImporter(isPresented: $isImporterPresented,
                   allowedContentTypes: [lazType],
