@@ -26,7 +26,7 @@ vertex VertexOut point_vertex(const device laszip_point *vertices [[buffer(0)]],
   VertexOut out;
   float4 worldPosition = float4(vertices[vertexID].position.xyz, 1.0);
   out.position = camera.viewProjectionMatrix * worldPosition;
-  out.color = float4(float3(worldPosition.y / 80.0 + 0.5), 1.0);
+  out.color = float4(float3(worldPosition.z / 80.0 + 0.5), 1.0);
   out.point_size = 600.0 / (length(out.position) + 0.01);
   return out;
 }

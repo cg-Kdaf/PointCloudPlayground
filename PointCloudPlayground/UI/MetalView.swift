@@ -96,7 +96,7 @@ final class OrbitMTKView: MTKView {
     if let previousLocation {
       let deltaX = Float(previousLocation.x - currentLocation.x)
       let deltaY = Float(previousLocation.y - currentLocation.y)
-      onMouseDrag?(deltaX, deltaY)
+      onMouseDrag?(-deltaX, deltaY)
     }
     previousLocation = currentLocation
   }

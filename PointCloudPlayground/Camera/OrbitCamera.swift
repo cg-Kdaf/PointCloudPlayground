@@ -89,10 +89,10 @@ final class OrbitCamera {
     // Compute camera's right and up vectors
     let forward = simd_normalize(SIMD3<Float>(
       cos(pitch) * sin(yaw),
-      sin(pitch),
-      cos(pitch) * cos(yaw)
+      cos(pitch) * cos(yaw),
+      sin(pitch)
     ))
-    let worldUp = SIMD3<Float>(0, 1, 0)
+    let worldUp = SIMD3<Float>(0, 0, 1)
     let right = simd_normalize(simd_cross(worldUp, forward))
     let up = simd_cross(forward, right)
     
@@ -111,7 +111,7 @@ final class OrbitCamera {
   
   func zoom(delta: Float) {
     let dt: Float = 0.016
-    let sensitivity: Float = 0.02
+    let sensitivity: Float = 0.06
     let radiusDelta = delta * sensitivity
     radius += radiusDelta
     radius = min(maxRadius, max(minRadius, radius))
@@ -123,8 +123,8 @@ final class OrbitCamera {
   func makeUniforms() -> CameraUniforms {
     let cameraPosition = SIMD3<Float>(
       radius * cos(pitch) * sin(yaw),
-      radius * sin(pitch),
-      radius * cos(pitch) * cos(yaw)
+      radius * cos(pitch) * cos(yaw),
+      radius * sin(pitch)
     )
     
     let projection = simd_float4x4.perspectiveFovRH(fovY: 60.0 * (.pi / 180.0),
@@ -133,7 +133,7 @@ final class OrbitCamera {
                                                     farZ: farCamera)
     let viewMatrix = simd_float4x4.lookAtRH(eye: cameraPosition + target,
                                             center: target,
-                                            up: SIMD3<Float>(0, 1, 0))
+                                            up: SIMD3<Float>(0, 0, 1))
     return CameraUniforms(viewProjectionMatrix: projection * viewMatrix)
   }
 }
