@@ -16,11 +16,15 @@ struct VertexOut {
   float4 color;
 };
 
-vertex VertexOut point_vertex(const device float3 *vertices [[buffer(0)]],
+struct laszip_point {
+  float4 position;
+};
+
+vertex VertexOut point_vertex(const device laszip_point *vertices [[buffer(0)]],
                               constant CameraUniforms &camera [[buffer(1)]],
                               uint vertexID [[vertex_id]]) {
   VertexOut out;
-  float4 worldPosition = float4(vertices[vertexID].xzy, 1.0);
+  float4 worldPosition = float4(vertices[vertexID].position.xyz, 1.0);
   out.position = camera.viewProjectionMatrix * worldPosition;
   out.color = float4(float3(worldPosition.y / 80.0 + 0.5), 1.0);
   out.point_size = 600.0 / (length(out.position) + 0.01);

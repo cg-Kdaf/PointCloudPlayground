@@ -1,6 +1,7 @@
 import Foundation
 import Metal
 import MetalKit
+import Laszip
 
 private struct MeshVertex {
   var position: SIMD3<Float>
@@ -16,8 +17,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
   private let gizmoVertexCount: Int
   private let cameraBuffer: MTLBuffer
   private let orbitCamera: OrbitCamera
-  private let loader: PointCloudLoader = .init()
-  private var pointCloudData: PointCloudBuffer? = nil
+  private var pointCloud: PointCloudFile? = nil
   private var pointCloudBuffer: MTLBuffer? = nil
   
   init?(mtkView: MTKView) {
@@ -145,18 +145,13 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
   }
   
   func loadCloud(filepath: String) {
-    pointCloudData = loader.loadLazFile(at: filepath)
-    
-    guard let pointCloudData else { return }
-
-    pointCloudData.buffer.withUnsafeBytes { (rawBuffer: UnsafeRawBufferPointer) in
-      guard let baseAddress = rawBuffer.baseAddress else {
-        pointCloudBuffer = nil
-        return
-      }
-      pointCloudBuffer = commandQueue.device.makeBuffer(bytes: baseAddress,
-                                                        length: pointCloudData.buffer.count,
-                                                        options: .storageModeShared)
+    pointCloud = .init()
+    guard pointCloud!.createFrom(filePath: filepath) else {
+      pointCloud = nil
+      return
+    }
+    pointCloud!.points?.withUnsafeBytes { data in
+      pointCloudBuffer = commandQueue.device.makeBuffer(bytes: data.baseAddress!, length: data.count, options: .storageModeShared)
     }
   }
   
@@ -182,13 +177,13 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     renderEncoder.setVertexBuffer(cameraBuffer, offset: 0, index: 1)
     renderEncoder.drawPrimitives(type: .line, vertexStart: 0, vertexCount: gizmoVertexCount)
 
-    if let pointCloudBuffer, let pointCloudData {
+    if let pointCloudBuffer, let pointCloud {
       renderEncoder.setRenderPipelineState(pointPipelineState)
       renderEncoder.setDepthStencilState(sceneDepthStencilState)
       // Pass the buffer we created from NSData
       renderEncoder.setVertexBuffer(pointCloudBuffer, offset: 0, index: 0)
       renderEncoder.setVertexBuffer(cameraBuffer, offset: 0, index: 1)
-      renderEncoder.drawPrimitives(type: .point, vertexStart: 0, vertexCount: Int(pointCloudData.pointCount))
+      renderEncoder.drawPrimitives(type: .point, vertexStart: 0, vertexCount: Int(pointCloud.pointsCount))
     }
 
     renderEncoder.endEncoding()

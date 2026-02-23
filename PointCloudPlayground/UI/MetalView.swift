@@ -60,15 +60,6 @@ struct MetalView: NSViewRepresentable {
       
       lastFilePath = filePath
       lastColor = color
-      
-      guard let renderer,
-            let filePath,
-            let color else {
-        //        renderer?.clearPointCloud()
-        return
-      }
-      
-      //      renderer.loadPointCloud(at: filePath, color: color)
     }
     
     func updateLoadRequest(requestID: Int, filepath: String?) {

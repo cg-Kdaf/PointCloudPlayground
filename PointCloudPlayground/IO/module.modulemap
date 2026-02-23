@@ -1,0 +1,8 @@
+
+module Laszip [system] {
+  header "laszip_api.h"
+  export *
+  requires cplusplus
+  
+  link "liblaszip_api.8.0.6.dylib"
+}
