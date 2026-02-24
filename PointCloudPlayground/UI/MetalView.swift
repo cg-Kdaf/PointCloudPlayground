@@ -4,8 +4,6 @@ import AppKit
 import simd
 
 struct MetalView: NSViewRepresentable {
-  let selectedFilePath: String?
-  let selectedColor: SIMD3<Float>?
   let scene: PlaygroundScene
   
   func makeNSView(context: Context) -> OrbitMTKView {
@@ -32,12 +30,10 @@ struct MetalView: NSViewRepresentable {
       renderer?.zoom(delta: delta)
     }
     context.coordinator.renderer = renderer
-    context.coordinator.updateSelection(filePath: selectedFilePath, color: selectedColor)
     return mtkView
   }
   
   func updateNSView(_ nsView: OrbitMTKView, context: Context) {
-    context.coordinator.updateSelection(filePath: selectedFilePath, color: selectedColor)
   }
   
   func makeCoordinator() -> Coordinator {
@@ -46,18 +42,6 @@ struct MetalView: NSViewRepresentable {
   
   final class Coordinator {
     var renderer: MetalRenderer?
-    private var lastFilePath: String?
-    private var lastColor: SIMD3<Float>?
-    private var lastLoadRequestID: Int?
-    
-    func updateSelection(filePath: String?, color: SIMD3<Float>?) {
-      guard lastFilePath != filePath || lastColor != color else {
-        return
-      }
-      
-      lastFilePath = filePath
-      lastColor = color
-    }
   }
 }
 

@@ -6,15 +6,36 @@
 //
 
 final class PlaygroundScene {
-  private(set) var pointCloud: PointCloudFile? = nil
+  private(set) var pointClouds: [PointCloudFile] = []
+  private(set) var filePaths: [String] = []
   var sceneModifiedCallbacks: [String: (PlaygroundScene) -> Void] = [:]
   
-  func loadCloud(filepath: String) {
-    pointCloud = .init()
-    guard pointCloud!.createFrom(filePath: filepath) else {
-      pointCloud = nil
+  func addCloud(filepath: String) {
+    guard !filePaths.contains(filepath) else {
       return
     }
+    
+    let pointCloud = PointCloudFile()
+    guard pointCloud.createFrom(filePath: filepath) else {
+      return
+    }
+    
+    pointClouds.append(pointCloud)
+    filePaths.append(filepath)
+    notifySceneModified()
+  }
+  
+  func removeCloud(filepath: String) {
+    guard let index = filePaths.firstIndex(of: filepath) else {
+      return
+    }
+    
+    filePaths.remove(at: index)
+    pointClouds.remove(at: index)
+    notifySceneModified()
+  }
+  
+  private func notifySceneModified() {
     for cb in sceneModifiedCallbacks.values { cb(self) }
   }
 }

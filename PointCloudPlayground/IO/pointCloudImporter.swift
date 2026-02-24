@@ -44,6 +44,7 @@ final class PointCloudFile {
       handle = pointer
       
       let url = URL(fileURLWithPath: filePath)
+      var point_id = 0
       try readFile(fileURL: url,
                    forheader: { header_ in
         header = header_
@@ -60,6 +61,10 @@ final class PointCloudFile {
         let z = Float(Double(p.Z) * header!.z_scale_factor + header!.z_offset - center.z)
         let position = SIMD4<Float>(x, y, z, 0.0)
         points!.append(laszip_point_shader.init(position: position))
+        if point_id > 7000000 {
+          throw LAZImportError.message("Stop here")
+        }
+        point_id += 1
       })
       return true
     } catch {
