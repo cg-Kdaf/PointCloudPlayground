@@ -46,9 +46,8 @@ struct ContentView: View {
 
   @State private var selectedPath: String?
   @State private var isImporterPresented = false
-  @State private var pendingLoadFilePath: String?
-  @State private var loadRequestID = 0
   private let newCloudColor = Color.white
+  private let scene = PlaygroundScene()
 
   private let lazType = UTType(filenameExtension: "laz") ?? .data
 
@@ -75,8 +74,7 @@ struct ContentView: View {
           ColorPicker("Color", selection: colorBinding(for: selectedCloud))
           
           Button("Load Cloud") {
-            pendingLoadFilePath = selectedCloud.filePath
-            loadRequestID += 1
+            scene.loadCloud(filepath: selectedCloud.filePath)
           }
           
           Button("Remove", role: .destructive) {
@@ -100,8 +98,7 @@ struct ContentView: View {
 
       MetalView(selectedFilePath: selectedCloud?.filePath,
                 selectedColor: selectedCloud?.simdColor,
-                loadRequestID: loadRequestID,
-                loadFilepath: pendingLoadFilePath)
+                scene: scene)
     }
     .fileImporter(isPresented: $isImporterPresented,
                   allowedContentTypes: [lazType],

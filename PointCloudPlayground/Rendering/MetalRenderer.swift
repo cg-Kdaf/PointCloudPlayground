@@ -9,8 +9,9 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
   private let depthConfig: FrameDepthConfig
   private let cameraBuffer: MTLBuffer
   private let orbitCamera: OrbitCamera
+  private let scene: PlaygroundScene
   
-  init?(mtkView: MTKView) {
+  init?(mtkView: MTKView, scene: PlaygroundScene) {
     guard let device = MTLCreateSystemDefaultDevice() else {
       return nil
     }
@@ -32,7 +33,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     guard let pointCloudRenderer = PointCloudRenderer(device: device,
                                                       library: library,
                                                       colorPixelFormat: mtkView.colorPixelFormat,
-                                                      depthPixelFormat: mtkView.depthStencilPixelFormat) else {
+                                                      depthPixelFormat: mtkView.depthStencilPixelFormat,
+                                                      scene: scene) else {
       return nil
     }
     
@@ -76,6 +78,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
                                         overlayDepthStencilState: overlayDepthStencilState)
     self.cameraBuffer = cameraBuffer
     self.orbitCamera = orbitCamera
+    self.scene = scene
     super.init()
   }
   
@@ -131,9 +134,5 @@ extension MetalRenderer {
   
   func zoom(delta: Float) {
     orbitCamera.zoom(delta: delta)
-  }
-  
-  func loadCloud(filepath: String) {
-    pointCloudRenderer.loadCloud(filepath: filepath)
   }
 }

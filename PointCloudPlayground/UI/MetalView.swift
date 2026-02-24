@@ -6,8 +6,7 @@ import simd
 struct MetalView: NSViewRepresentable {
   let selectedFilePath: String?
   let selectedColor: SIMD3<Float>?
-  let loadRequestID: Int
-  let loadFilepath: String?
+  let scene: PlaygroundScene
   
   func makeNSView(context: Context) -> OrbitMTKView {
     let mtkView = OrbitMTKView(frame: .zero)
@@ -15,7 +14,7 @@ struct MetalView: NSViewRepresentable {
     mtkView.enableSetNeedsDisplay = false
     mtkView.isPaused = false
     
-    guard let renderer = MetalRenderer(mtkView: mtkView) else {
+    guard let renderer = MetalRenderer(mtkView: mtkView, scene: scene) else {
       return mtkView
     }
     
@@ -34,13 +33,11 @@ struct MetalView: NSViewRepresentable {
     }
     context.coordinator.renderer = renderer
     context.coordinator.updateSelection(filePath: selectedFilePath, color: selectedColor)
-    context.coordinator.updateLoadRequest(requestID: loadRequestID, filepath: loadFilepath)
     return mtkView
   }
   
   func updateNSView(_ nsView: OrbitMTKView, context: Context) {
     context.coordinator.updateSelection(filePath: selectedFilePath, color: selectedColor)
-    context.coordinator.updateLoadRequest(requestID: loadRequestID, filepath: loadFilepath)
   }
   
   func makeCoordinator() -> Coordinator {
@@ -60,21 +57,6 @@ struct MetalView: NSViewRepresentable {
       
       lastFilePath = filePath
       lastColor = color
-    }
-    
-    func updateLoadRequest(requestID: Int, filepath: String?) {
-      guard lastLoadRequestID != requestID else {
-        return
-      }
-      
-      lastLoadRequestID = requestID
-      
-      guard let renderer,
-            let filepath else {
-        return
-      }
-      
-      renderer.loadCloud(filepath: filepath)
     }
   }
 }
