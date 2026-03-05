@@ -80,13 +80,31 @@ struct ContentView: View {
             .font(.subheadline)
           
           ForEach(displayedPaths, id: \.self) { path in
-            HStack {
-              Text(URL(fileURLWithPath: path).lastPathComponent)
-                .lineLimit(1)
-              Spacer()
-              Button("Remove") {
-                displayedPaths.removeAll { $0 == path }
-                scene.removeCloud(filepath: path)
+            VStack(alignment: .leading, spacing: 6) {
+              HStack {
+                Text(URL(fileURLWithPath: path).lastPathComponent)
+                  .lineLimit(1)
+                Spacer()
+                Button("Remove") {
+                  displayedPaths.removeAll { $0 == path }
+                  scene.removeCloud(filepath: path)
+                }
+              }
+
+              HStack(spacing: 8) {
+                Text("Color")
+                  .font(.caption)
+                ColorPicker("", selection: colorBinding(for: path), supportsOpacity: true)
+                  .labelsHidden()
+              }
+
+              HStack(spacing: 8) {
+                Text("Size")
+                  .font(.caption)
+                Slider(value: pointSizeBinding(for: path), in: 0.5...20.0)
+                Text(String(format: "%.1f", scene.pointSize(for: path) ?? 1.0))
+                  .font(.caption.monospacedDigit())
+                  .frame(width: 36, alignment: .trailing)
               }
             }
           }
@@ -132,6 +150,20 @@ struct ContentView: View {
     let entry = PointCloudEntry(filePath: url.path)
     modelContext.insert(entry)
     selectedPath = entry.filePath
+  }
+
+  private func colorBinding(for path: String) -> Binding<Color> {
+    Binding(
+      get: { scene.color(for: path) ?? .white },
+      set: { scene.updateColor($0, for: path) }
+    )
+  }
+
+  private func pointSizeBinding(for path: String) -> Binding<Float> {
+    Binding(
+      get: { scene.pointSize(for: path) ?? 1.0 },
+      set: { scene.updatePointSize($0, for: path) }
+    )
   }
 }
 

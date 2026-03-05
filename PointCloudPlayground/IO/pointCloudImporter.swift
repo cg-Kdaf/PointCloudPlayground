@@ -7,6 +7,7 @@
 
 import Laszip
 import Foundation
+import SwiftUI
 
 enum LAZImportError: Error, LocalizedError {
   case message(String)
@@ -23,8 +24,20 @@ struct laszip_point_shader {
   let position: SIMD4<Float>
 }
 
+struct BoundingBox {
+  let max_x: Float
+  let min_x: Float
+  let max_y: Float
+  let min_y: Float
+  let max_z: Float
+  let min_z: Float
+}
+
 final class PointCloudFile {
   var header: laszip_header? = nil
+  var boundingBox: BoundingBox? = nil
+  var color: Color = .white
+  var pointSize: Float = 1.0
   var points: [laszip_point_shader]? = nil
   var pointsCount: Int = 0
   private(set) var center: SIMD4<Double> = .zero
@@ -55,6 +68,12 @@ final class PointCloudFile {
         center.y = header!.max_y + header!.min_y
         center.z = header!.max_z + header!.min_z
         center /= 2.0
+        boundingBox = BoundingBox(max_x: Float(header!.max_x - center.x),
+                                  min_x: Float(header!.min_x - center.x),
+                                  max_y: Float(header!.max_y - center.y),
+                                  min_y: Float(header!.min_y - center.y),
+                                  max_z: Float(header!.max_z - center.z),
+                                  min_z: Float(header!.min_z - center.z))
       }, foreachpoint: { p in
         let x = Float(Double(p.X) * header!.x_scale_factor + header!.x_offset - center.x)
         let y = Float(Double(p.Y) * header!.y_scale_factor + header!.y_offset - center.y)

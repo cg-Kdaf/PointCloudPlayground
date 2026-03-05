@@ -1,4 +1,5 @@
 #include <metal_stdlib>
+#include "../PointCloudPlayground-Bridging-Header.h"
 using namespace metal;
 
 struct CameraUniforms {
@@ -17,12 +18,15 @@ struct laszip_point {
 
 vertex PointVertexOut point_vertex(const device laszip_point *vertices [[buffer(0)]],
                                    constant CameraUniforms &camera [[buffer(1)]],
+                                   constant PointCloudRenderUniforms &uniforms [[buffer(2)]],
                                    uint vertexID [[vertex_id]]) {
   PointVertexOut out;
   float4 worldPosition = float4(vertices[vertexID].position.xyz, 1.0);
   out.position = camera.viewProjectionMatrix * worldPosition;
-  out.color = float4(float3(worldPosition.z / 80.0 + 0.5), 1.0);
-  out.point_size = 600.0 / (length(out.position) + 0.01);
+  float shading = (vertices[vertexID].position.z - uniforms.bboxMinZ) / (uniforms.bboxMaxZ - uniforms.bboxMinZ);
+  float3 color = float3(uniforms.colorR, uniforms.colorG, uniforms.colorB);
+  out.color = float4(color * shading, uniforms.colorA);
+  out.point_size = uniforms.pointSize * 600.0 / (length(out.position) + 0.01);;
   return out;
 }
 
