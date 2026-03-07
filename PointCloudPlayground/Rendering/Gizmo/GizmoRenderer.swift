@@ -1,4 +1,5 @@
 import Metal
+import simd
 
 private struct GizmoVertex {
   var position: SIMD3<Float>
@@ -86,7 +87,7 @@ final class GizmoRenderer {
       return
     }
 
-    let vertices = Self.makeBoundingBoxVertices(bbox: bbox)
+    let vertices = Self.makeBoundingBoxVertices(bbox: bbox, modelMatrix: selectedObject.modelMatrix)
     bboxVertexCount = vertices.count
     bboxVertexBuffer = device.makeBuffer(bytes: vertices,
                                          length: MemoryLayout<GizmoVertex>.stride * vertices.count,
@@ -118,38 +119,32 @@ final class GizmoRenderer {
     ]
   }
 
-  private static func makeBoundingBoxVertices(bbox: BoundingBox) -> [GizmoVertex] {
-    let color = SIMD3<Float>(1, 1, 0) // Yellow wireframe
+  private static func makeBoundingBoxVertices(bbox: BoundingBox, modelMatrix: simd_float4x4) -> [GizmoVertex] {
+    let color = SIMD3<Float>(1, 1, 0)
+    let lo = SIMD3<Float>(bbox.min_x, bbox.min_y, bbox.min_z)
+    let hi = SIMD3<Float>(bbox.max_x, bbox.max_y, bbox.max_z)
 
-    // 8 corners of the box
-    let corners: [SIMD3<Float>] = [
-      SIMD3<Float>(bbox.min_x, bbox.min_y, bbox.min_z), // 0
-      SIMD3<Float>(bbox.max_x, bbox.min_y, bbox.min_z), // 1
-      SIMD3<Float>(bbox.max_x, bbox.max_y, bbox.min_z), // 2
-      SIMD3<Float>(bbox.min_x, bbox.max_y, bbox.min_z), // 3
-      SIMD3<Float>(bbox.min_x, bbox.min_y, bbox.max_z), // 4
-      SIMD3<Float>(bbox.max_x, bbox.min_y, bbox.max_z), // 5
-      SIMD3<Float>(bbox.max_x, bbox.max_y, bbox.max_z), // 6
-      SIMD3<Float>(bbox.min_x, bbox.max_y, bbox.max_z), // 7
-    ]
-
-    // 12 edges of a box, each as a pair of corner indices
-    let edges: [(Int, Int)] = [
-      // Bottom face
-      (0, 1), (1, 2), (2, 3), (3, 0),
-      // Top face
-      (4, 5), (5, 6), (6, 7), (7, 4),
-      // Vertical edges
-      (0, 4), (1, 5), (2, 6), (3, 7),
-    ]
-
-    var vertices: [GizmoVertex] = []
-    vertices.reserveCapacity(edges.count * 2)
-    for (a, b) in edges {
-      vertices.append(GizmoVertex(position: corners[a], color: color))
-      vertices.append(GizmoVertex(position: corners[b], color: color))
+    // 8 corners: iterate over each bit pattern of (x, y, z) = lo/hi
+    let corners = (0..<8).map { i -> SIMD3<Float> in
+      let local = SIMD3<Float>(
+        (i & 1) != 0 ? hi.x : lo.x,
+        (i & 2) != 0 ? hi.y : lo.y,
+        (i & 4) != 0 ? hi.z : lo.z
+      )
+      let w = modelMatrix * SIMD4<Float>(local, 1.0)
+      return SIMD3<Float>(w.x, w.y, w.z)
     }
-    return vertices
+
+    // 12 edges: pairs that differ by exactly one bit
+    let edges: [(Int, Int)] = [
+      (0,1),(2,3),(4,5),(6,7), // differ in bit 0 (x)
+      (0,2),(1,3),(4,6),(5,7), // differ in bit 1 (y)
+      (0,4),(1,5),(2,6),(3,7), // differ in bit 2 (z)
+    ]
+    return edges.flatMap { (a, b) in
+      [GizmoVertex(position: corners[a], color: color),
+       GizmoVertex(position: corners[b], color: color)]
+    }
   }
 }
 

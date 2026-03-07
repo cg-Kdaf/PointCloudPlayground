@@ -22,7 +22,7 @@ vertex PointVertexOut point_vertex_shader(const device point_vertex *vertices [[
                                           uint vertexID [[vertex_id]]) {
   PointVertexOut out;
   float4 worldPosition = float4(vertices[vertexID].position.xyz, 1.0);
-  out.position = camera.viewProjectionMatrix * worldPosition;
+  out.position = camera.viewProjectionMatrix * uniforms.modelMatrix * worldPosition;
   float shading = (vertices[vertexID].position.z - uniforms.bboxMinZ) / (uniforms.bboxMaxZ - uniforms.bboxMinZ);
   float3 color = float3(uniforms.colorR, uniforms.colorG, uniforms.colorB);
   out.color = float4(color * shading, uniforms.colorA);

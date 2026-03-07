@@ -16,7 +16,7 @@ final class OrbitCamera {
   private var pitch: Float = 0.4
   private var yaw_speed: Float = 0.0
   private var pitch_speed: Float = 0.0
-  private var radius: Float = 30.0
+  private(set) var radius: Float = 30.0
   private var radius_speed: Float = 0.0
   private var target = SIMD3<Float>(0, 0, 0)
   private var target_speed = SIMD3<Float>(0, 0, 0)
@@ -136,9 +136,24 @@ final class OrbitCamera {
                                             up: SIMD3<Float>(0, 0, 1))
     return CameraUniforms(viewProjectionMatrix: projection * viewMatrix)
   }
+
+  /// Camera basis vectors in world space
+  var forward: SIMD3<Float> {
+    simd_normalize(SIMD3<Float>(
+      cos(pitch) * sin(yaw),
+      cos(pitch) * cos(yaw),
+      sin(pitch)
+    ))
+  }
+  var right: SIMD3<Float> {
+    simd_normalize(simd_cross(SIMD3<Float>(0, 0, 1), forward))
+  }
+  var up: SIMD3<Float> {
+    simd_cross(forward, right)
+  }
 }
 
-private extension simd_float4x4 {
+extension simd_float4x4 {
   static func perspectiveFovRH(fovY: Float, aspect: Float, nearZ: Float, farZ: Float) -> simd_float4x4 {
     let yScale = 1 / tan(fovY * 0.5)
     let xScale = yScale / aspect
@@ -174,5 +189,43 @@ private extension simd_float4x4 {
     ))
     
     return rotation * translation
+  }
+
+  static func translation(_ t: SIMD3<Float>) -> simd_float4x4 {
+    var m = matrix_identity_float4x4
+    m.columns.3 = SIMD4<Float>(t, 1)
+    return m
+  }
+
+  static func rotation(axis: SIMD3<Float>, angle: Float) -> simd_float4x4 {
+    let a = simd_normalize(axis)
+    let c = cos(angle); let s = sin(angle); let t = 1 - c
+    return simd_float4x4(columns: (
+      SIMD4<Float>(t*a.x*a.x + c,     t*a.x*a.y + s*a.z, t*a.x*a.z - s*a.y, 0),
+      SIMD4<Float>(t*a.x*a.y - s*a.z, t*a.y*a.y + c,     t*a.y*a.z + s*a.x, 0),
+      SIMD4<Float>(t*a.x*a.z + s*a.y, t*a.y*a.z - s*a.x, t*a.z*a.z + c,     0),
+      SIMD4<Float>(0, 0, 0, 1)
+    ))
+  }
+
+  static func scaling(_ s: SIMD3<Float>) -> simd_float4x4 {
+    var m = matrix_identity_float4x4
+    m.columns.0.x = s.x; m.columns.1.y = s.y; m.columns.2.z = s.z
+    return m
+  }
+
+  static func eulerAnglesZYX(from m: simd_float4x4) -> SIMD3<Float> {
+    let sy = -m.columns.0.z
+    let y = asin(simd_clamp(sy, -1, 1))
+    if abs(sy) < 0.9999 {
+      return SIMD3(atan2(m.columns.1.z, m.columns.2.z), y, atan2(m.columns.0.y, m.columns.0.x))
+    }
+    return SIMD3(atan2(-m.columns.2.y, m.columns.1.y), y, 0)
+  }
+
+  static func fromEulerZYX(_ e: SIMD3<Float>) -> simd_float4x4 {
+    rotation(axis: SIMD3(0,0,1), angle: e.z) *
+    rotation(axis: SIMD3(0,1,0), angle: e.y) *
+    rotation(axis: SIMD3(1,0,0), angle: e.x)
   }
 }

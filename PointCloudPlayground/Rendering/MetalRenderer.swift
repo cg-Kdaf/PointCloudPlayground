@@ -10,6 +10,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
   private let cameraBuffer: MTLBuffer
   private let orbitCamera: OrbitCamera
   private let scene: PlaygroundScene
+  let transformController: TransformController
   
   init?(mtkView: MTKView, scene: PlaygroundScene) {
     guard let device = MTLCreateSystemDefaultDevice() else {
@@ -80,6 +81,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     self.cameraBuffer = cameraBuffer
     self.orbitCamera = orbitCamera
     self.scene = scene
+    self.transformController = TransformController(scene: scene)
     super.init()
   }
   
@@ -95,6 +97,10 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
       return
     }
     orbitCamera.updateOrbit()
+    transformController.cameraDistance = orbitCamera.radius
+    transformController.cameraRight = orbitCamera.right
+    transformController.cameraUp = orbitCamera.up
+    transformController.cameraForward = orbitCamera.forward
     var cameraUniforms = orbitCamera.makeUniforms()
     cameraBuffer.contents().copyMemory(from: &cameraUniforms, byteCount: MemoryLayout<CameraUniforms>.stride)
     

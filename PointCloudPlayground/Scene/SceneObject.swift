@@ -7,6 +7,7 @@
 
 import SwiftUI
 import Combine
+import simd
 
 protocol DataBlock {}
 
@@ -31,6 +32,15 @@ final class SceneObject: ObservableObject, Identifiable {
   
   @Published var name: String
   @Published var isVisible: Bool = true
+  @Published var translation: SIMD3<Float> = .zero
+  @Published var rotation: SIMD3<Float> = .zero    // Euler angles in radians (X, Y, Z)
+  @Published var scale: SIMD3<Float> = .one
+  
+  var modelMatrix: simd_float4x4 {
+    simd_float4x4.translation(translation) *
+    simd_float4x4.fromEulerZYX(rotation) *
+    simd_float4x4.scaling(scale)
+  }
   
   init(name: String, dataBlock: DataBlock, type: DataBlockType) {
     self.id = UUID()

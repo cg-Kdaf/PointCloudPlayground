@@ -1,6 +1,7 @@
 import Metal
 import AppKit
 import SwiftUI
+import simd
 
 final class PointCloudRenderer: RenderPass {
   private struct RenderCloud {
@@ -61,6 +62,7 @@ final class PointCloudRenderer: RenderPass {
       let color = NSColor(pointCloudData.color).usingColorSpace(.sRGB) ?? .white
       let bbox = pointCloudData.boundingBox
       let uniforms = PointCloudRenderUniforms(
+        modelMatrix: sceneObject.modelMatrix,
         bboxMaxX: bbox?.max_x ?? 1.0,
         bboxMinX: bbox?.min_x ?? 0.0,
         bboxMaxY: bbox?.max_y ?? 1.0,
@@ -93,7 +95,19 @@ final class PointCloudRenderer: RenderPass {
     guard !renderClouds.isEmpty else {
       return
     }
-    
+
+    // Update model matrix per cloud each frame (transforms may change)
+    var cloudIndex = 0
+    for sceneObject in scene.getVisibleObjects() {
+      guard sceneObject.asPointCloudData != nil, cloudIndex < renderClouds.count else {
+        continue
+      }
+      var model = sceneObject.modelMatrix
+      renderClouds[cloudIndex].uniformsBuffer.contents()
+        .copyMemory(from: &model, byteCount: MemoryLayout<simd_float4x4>.stride)
+      cloudIndex += 1
+    }
+
     encoder.setViewport(frame.viewport)
     encoder.setRenderPipelineState(pipelineState)
     encoder.setDepthStencilState(frame.depth.sceneDepthStencilState)

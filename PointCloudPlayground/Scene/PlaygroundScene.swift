@@ -40,10 +40,19 @@ final class PlaygroundScene: ObservableObject {
     let object = SceneObject(name: name, dataBlock: data, type: .pointCloud)
     
     // Subscribe to changes in PointCloudDataBlock properties
-    let observation = Publishers.Merge(
+    let dataObservation = Publishers.Merge(
       data.$color.map { _ in () },
       data.$pointSize.map { _ in () }
     )
+    
+    // Subscribe to changes in SceneObject transform properties
+    let transformObservation = Publishers.Merge3(
+      object.$translation.map { _ in () },
+      object.$rotation.map { _ in () },
+      object.$scale.map { _ in () }
+    )
+    
+    let observation = Publishers.Merge(dataObservation, transformObservation)
     .sink { [weak self] _ in
       self?.notifySceneModified()
     }
