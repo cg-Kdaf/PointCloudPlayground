@@ -57,7 +57,8 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
     guard let gizmoRenderer = GizmoRenderer(device: device,
                                             library: library,
                                             colorPixelFormat: mtkView.colorPixelFormat,
-                                            depthPixelFormat: mtkView.depthStencilPixelFormat) else {
+                                            depthPixelFormat: mtkView.depthStencilPixelFormat,
+                                            scene: scene) else {
       return nil
     }
     

@@ -6,14 +6,19 @@ private struct GizmoVertex {
 }
 
 final class GizmoRenderer {
+  private let device: MTLDevice
   private let pipelineState: MTLRenderPipelineState
-  private let vertexBuffer: MTLBuffer
-  private let vertexCount: Int
+  private let axisVertexBuffer: MTLBuffer
+  private let axisVertexCount: Int
+  private var bboxVertexBuffer: MTLBuffer?
+  private var bboxVertexCount: Int = 0
+  private let scene: PlaygroundScene
 
   init?(device: MTLDevice,
         library: MTLLibrary,
         colorPixelFormat: MTLPixelFormat,
-        depthPixelFormat: MTLPixelFormat) {
+        depthPixelFormat: MTLPixelFormat,
+        scene: PlaygroundScene) {
     guard let vertexFunction = library.makeFunction(name: "gizmo_vertex"),
           let fragmentFunction = library.makeFunction(name: "gizmo_fragment") else {
       return nil
@@ -30,16 +35,27 @@ final class GizmoRenderer {
       return nil
     }
 
-    let vertices = Self.makeVertices()
-    guard let vertexBuffer = device.makeBuffer(bytes: vertices,
-                                               length: MemoryLayout<GizmoVertex>.stride * vertices.count,
-                                               options: .storageModeShared) else {
+    let vertices = Self.makeAxisVertices()
+    guard let axisVertexBuffer = device.makeBuffer(bytes: vertices,
+                                                   length: MemoryLayout<GizmoVertex>.stride * vertices.count,
+                                                   options: .storageModeShared) else {
       return nil
     }
 
+    self.device = device
     self.pipelineState = pipelineState
-    self.vertexBuffer = vertexBuffer
-    self.vertexCount = vertices.count
+    self.axisVertexBuffer = axisVertexBuffer
+    self.axisVertexCount = vertices.count
+    self.scene = scene
+
+    scene.sceneModifiedCallbacks["GizmoRenderer"] = { [weak self] s in
+      self?.updateBoundingBox(scene: s)
+    }
+    updateBoundingBox(scene: scene)
+  }
+
+  deinit {
+    scene.sceneModifiedCallbacks.removeValue(forKey: "GizmoRenderer")
   }
 
   func draw(encoder: MTLRenderCommandEncoder, frame: FrameContext) {
@@ -47,9 +63,34 @@ final class GizmoRenderer {
     encoder.setRenderPipelineState(pipelineState)
     encoder.setDepthStencilState(frame.depth.overlayDepthStencilState)
     encoder.setCullMode(.none)
-    encoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
+
+    // Draw axis lines
+    encoder.setVertexBuffer(axisVertexBuffer, offset: 0, index: 0)
     encoder.setVertexBuffer(frame.cameraBuffer, offset: 0, index: 1)
-    encoder.drawPrimitives(type: .line, vertexStart: 0, vertexCount: vertexCount)
+    encoder.drawPrimitives(type: .line, vertexStart: 0, vertexCount: axisVertexCount)
+
+    // Draw bounding box wireframe for selected object
+    if let bboxBuffer = bboxVertexBuffer, bboxVertexCount > 0 {
+      encoder.setVertexBuffer(bboxBuffer, offset: 0, index: 0)
+      encoder.drawPrimitives(type: .line, vertexStart: 0, vertexCount: bboxVertexCount)
+    }
+  }
+
+  private func updateBoundingBox(scene: PlaygroundScene) {
+    guard let selectedId = scene.selectedObjectId,
+          let selectedObject = scene.objects.first(where: { $0.id == selectedId }),
+          let pointCloudData = selectedObject.asPointCloudData,
+          let bbox = pointCloudData.boundingBox else {
+      bboxVertexBuffer = nil
+      bboxVertexCount = 0
+      return
+    }
+
+    let vertices = Self.makeBoundingBoxVertices(bbox: bbox)
+    bboxVertexCount = vertices.count
+    bboxVertexBuffer = device.makeBuffer(bytes: vertices,
+                                         length: MemoryLayout<GizmoVertex>.stride * vertices.count,
+                                         options: .storageModeShared)
   }
 
   private static func makeVertexDescriptor() -> MTLVertexDescriptor {
@@ -65,7 +106,7 @@ final class GizmoRenderer {
     return descriptor
   }
 
-  private static func makeVertices() -> [GizmoVertex] {
+  private static func makeAxisVertices() -> [GizmoVertex] {
     let axisExtent: Float = 1_000_000
     return [
       GizmoVertex(position: SIMD3<Float>(-axisExtent, 0, 0), color: SIMD3<Float>(1, 0, 0)),
@@ -75,6 +116,40 @@ final class GizmoRenderer {
       GizmoVertex(position: SIMD3<Float>(0, 0, -axisExtent), color: SIMD3<Float>(0, 0, 1)),
       GizmoVertex(position: SIMD3<Float>(0, 0,  axisExtent), color: SIMD3<Float>(0, 0, 1))
     ]
+  }
+
+  private static func makeBoundingBoxVertices(bbox: BoundingBox) -> [GizmoVertex] {
+    let color = SIMD3<Float>(1, 1, 0) // Yellow wireframe
+
+    // 8 corners of the box
+    let corners: [SIMD3<Float>] = [
+      SIMD3<Float>(bbox.min_x, bbox.min_y, bbox.min_z), // 0
+      SIMD3<Float>(bbox.max_x, bbox.min_y, bbox.min_z), // 1
+      SIMD3<Float>(bbox.max_x, bbox.max_y, bbox.min_z), // 2
+      SIMD3<Float>(bbox.min_x, bbox.max_y, bbox.min_z), // 3
+      SIMD3<Float>(bbox.min_x, bbox.min_y, bbox.max_z), // 4
+      SIMD3<Float>(bbox.max_x, bbox.min_y, bbox.max_z), // 5
+      SIMD3<Float>(bbox.max_x, bbox.max_y, bbox.max_z), // 6
+      SIMD3<Float>(bbox.min_x, bbox.max_y, bbox.max_z), // 7
+    ]
+
+    // 12 edges of a box, each as a pair of corner indices
+    let edges: [(Int, Int)] = [
+      // Bottom face
+      (0, 1), (1, 2), (2, 3), (3, 0),
+      // Top face
+      (4, 5), (5, 6), (6, 7), (7, 4),
+      // Vertical edges
+      (0, 4), (1, 5), (2, 6), (3, 7),
+    ]
+
+    var vertices: [GizmoVertex] = []
+    vertices.reserveCapacity(edges.count * 2)
+    for (a, b) in edges {
+      vertices.append(GizmoVertex(position: corners[a], color: color))
+      vertices.append(GizmoVertex(position: corners[b], color: color))
+    }
+    return vertices
   }
 }
 

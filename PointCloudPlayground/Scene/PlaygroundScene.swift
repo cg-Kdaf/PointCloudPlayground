@@ -75,10 +75,12 @@ final class PlaygroundScene: ObservableObject {
   
   func selectObject(id: UUID) {
     selectedObjectId = id
+    notifySceneModified()
   }
   
   func deselectAll() {
     selectedObjectId = nil
+    notifySceneModified()
   }
   
   func toggleVisibility(for id: UUID) {
