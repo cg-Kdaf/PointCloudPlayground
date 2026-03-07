@@ -1,13 +1,12 @@
 //
-//  pointCloudImporter.swift
+//  LaszipImporter.swift
 //  PointCloudPlayground
 //
-//  Created by Colin Marmond on 23/02/2026.
+//  Created by Colin Marmond on 07/03/2026.
 //
 
 import Laszip
 import Foundation
-import SwiftUI
 
 enum LAZImportError: Error, LocalizedError {
   case message(String)
@@ -20,35 +19,12 @@ enum LAZImportError: Error, LocalizedError {
   }
 }
 
-struct laszip_point_shader {
-  let position: SIMD4<Float>
-}
-
-struct BoundingBox {
-  let max_x: Float
-  let min_x: Float
-  let max_y: Float
-  let min_y: Float
-  let max_z: Float
-  let min_z: Float
-}
-
-final class PointCloudFile {
-  var header: laszip_header? = nil
-  var boundingBox: BoundingBox? = nil
-  var color: Color = .white
-  var pointSize: Float = 1.0
-  var points: [laszip_point_shader]? = nil
-  var pointsCount: Int = 0
-  private(set) var center: SIMD4<Double> = .zero
+final class LaszipImporter {
   
   private var handle: laszip_POINTER?
   private var isReaderOpen = false
   
-  init() {
-  }
-  
-  func createFrom(filePath: String) -> Bool {
+  func importFrom(filePath: String) -> PointCloud? {
     do {
       var pointer: laszip_POINTER?
       guard laszip_create(&pointer) == 0, pointer != nil else {
@@ -57,52 +33,50 @@ final class PointCloudFile {
       handle = pointer
       
       let url = URL(fileURLWithPath: filePath)
+      var points: [PointVertex] = []
+      var pointsCount: Int = 0
+      var center: SIMD4<Double> = .zero
+      var boundingBox: BoundingBox?
       var point_id = 0
+      
       try readFile(fileURL: url,
-                   forheader: { header_ in
-        header = header_
-        points = .init()
-        pointsCount = Int(header!.extended_number_of_point_records)
-        points!.reserveCapacity(pointsCount)
-        center.x = header!.max_x + header!.min_x
-        center.y = header!.max_y + header!.min_y
-        center.z = header!.max_z + header!.min_z
+                   forheader: { header in
+        pointsCount = Int(header.extended_number_of_point_records)
+        points.reserveCapacity(pointsCount)
+        center.x = header.max_x + header.min_x
+        center.y = header.max_y + header.min_y
+        center.z = header.max_z + header.min_z
         center /= 2.0
-        boundingBox = BoundingBox(max_x: Float(header!.max_x - center.x),
-                                  min_x: Float(header!.min_x - center.x),
-                                  max_y: Float(header!.max_y - center.y),
-                                  min_y: Float(header!.min_y - center.y),
-                                  max_z: Float(header!.max_z - center.z),
-                                  min_z: Float(header!.min_z - center.z))
-      }, foreachpoint: { p in
-        let x = Float(Double(p.X) * header!.x_scale_factor + header!.x_offset - center.x)
-        let y = Float(Double(p.Y) * header!.y_scale_factor + header!.y_offset - center.y)
-        let z = Float(Double(p.Z) * header!.z_scale_factor + header!.z_offset - center.z)
+        boundingBox = BoundingBox(max_x: Float(header.max_x - center.x),
+                                  min_x: Float(header.min_x - center.x),
+                                  max_y: Float(header.max_y - center.y),
+                                  min_y: Float(header.min_y - center.y),
+                                  max_z: Float(header.max_z - center.z),
+                                  min_z: Float(header.min_z - center.z))
+      }, foreachpoint: { (p, header) in
+        let x = Float(Double(p.X) * header.x_scale_factor + header.x_offset - center.x)
+        let y = Float(Double(p.Y) * header.y_scale_factor + header.y_offset - center.y)
+        let z = Float(Double(p.Z) * header.z_scale_factor + header.z_offset - center.z)
         let position = SIMD4<Float>(x, y, z, 0.0)
-        points!.append(laszip_point_shader.init(position: position))
+        points.append(PointVertex(position: position))
         if point_id > 7000000 {
           throw LAZImportError.message("Stop here")
         }
         point_id += 1
       })
-      return true
+      
+      cleanup()
+      return PointCloud(points: points, pointsCount: pointsCount, center: center, boundingBox: boundingBox)
     } catch {
       print("Import failed: \(error.localizedDescription)")
+      cleanup()
     }
-    return false
+    return nil
   }
   
-  deinit {
-    // Can happen only if the object is destroyed while opening the file
-    if isReaderOpen, let handle {
-      _ = laszip_close_reader(handle)
-    }
-    if let handle {
-      _ = laszip_destroy(handle)
-    }
-  }
-  
-  func readFile(fileURL: URL, forheader: (laszip_header) throws -> Void, foreachpoint: (laszip_point) throws -> Void) throws {
+  private func readFile(fileURL: URL,
+                        forheader: (laszip_header) throws -> Void,
+                        foreachpoint: (laszip_point, laszip_header) throws -> Void) throws {
     guard let handle else {
       throw LAZImportError.message("LASzip handle is nil")
     }
@@ -128,14 +102,14 @@ final class PointCloudFile {
       throw LAZImportError.message("laszip_get_point_pointer failed: \(lastErrorMessage())")
     }
     
-    let header_ = headerPointer.pointee
-    try forheader(header_)
+    let header = headerPointer.pointee
+    try forheader(header)
     
     let totalPointCount: Int
-    if header_.extended_number_of_point_records > 0 {
-      totalPointCount = Int(header_.extended_number_of_point_records)
+    if header.extended_number_of_point_records > 0 {
+      totalPointCount = Int(header.extended_number_of_point_records)
     } else {
-      totalPointCount = Int(header_.number_of_point_records)
+      totalPointCount = Int(header.number_of_point_records)
     }
     
     let pointsToRead = max(0, totalPointCount)
@@ -148,7 +122,7 @@ final class PointCloudFile {
       
       let point = pointPointer.pointee
       do {
-        try foreachpoint(point)
+        try foreachpoint(point, header)
       } catch {
         break
       }
@@ -156,6 +130,17 @@ final class PointCloudFile {
     
     _ = laszip_close_reader(handle)
     isReaderOpen = false
+  }
+  
+  private func cleanup() {
+    if isReaderOpen, let handle {
+      _ = laszip_close_reader(handle)
+      isReaderOpen = false
+    }
+    if let handle {
+      _ = laszip_destroy(handle)
+    }
+    handle = nil
   }
   
   private func lastErrorMessage() -> String {
@@ -166,5 +151,9 @@ final class PointCloudFile {
       return "Unknown LASzip error"
     }
     return String(cString: errorPointer)
+  }
+  
+  deinit {
+    cleanup()
   }
 }

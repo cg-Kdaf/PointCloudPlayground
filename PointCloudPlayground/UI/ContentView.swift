@@ -29,7 +29,8 @@ struct ContentView: View {
   
   @State private var selectedPath: String?
   @State private var displayedPaths: [String] = []
-  @State private var isImporterPresented = false
+  @State private var isLazImporterPresented = false
+  @State private var isColmapFolderPresented = false
   private let scene = PlaygroundScene()
   
   private let lazType = UTType(filenameExtension: "laz") ?? .data
@@ -90,14 +91,14 @@ struct ContentView: View {
                   scene.removeCloud(filepath: path)
                 }
               }
-
+              
               HStack(spacing: 8) {
                 Text("Color")
                   .font(.caption)
                 ColorPicker("", selection: colorBinding(for: path), supportsOpacity: true)
                   .labelsHidden()
               }
-
+              
               HStack(spacing: 8) {
                 Text("Size")
                   .font(.caption)
@@ -113,7 +114,11 @@ struct ContentView: View {
         Divider()
         
         Button("Add .laz file") {
-          isImporterPresented = true
+          isLazImporterPresented = true
+        }
+        
+        Button("Add COLMAP folder") {
+          isColmapFolderPresented = true
         }
         
         Spacer()
@@ -125,8 +130,12 @@ struct ContentView: View {
       
       MetalView(scene: scene)
     }
-    .fileImporter(isPresented: $isImporterPresented,
+    .fileImporter(isPresented: $isLazImporterPresented,
                   allowedContentTypes: [lazType],
+                  allowsMultipleSelection: false,
+                  onCompletion: handleImportResult)
+    .fileImporter(isPresented: $isColmapFolderPresented,
+                  allowedContentTypes: [.folder],
                   allowsMultipleSelection: false,
                   onCompletion: handleImportResult)
     .onAppear {
@@ -151,14 +160,14 @@ struct ContentView: View {
     modelContext.insert(entry)
     selectedPath = entry.filePath
   }
-
+  
   private func colorBinding(for path: String) -> Binding<Color> {
     Binding(
       get: { scene.color(for: path) ?? .white },
       set: { scene.updateColor($0, for: path) }
     )
   }
-
+  
   private func pointSizeBinding(for path: String) -> Binding<Float> {
     Binding(
       get: { scene.pointSize(for: path) ?? 1.0 },

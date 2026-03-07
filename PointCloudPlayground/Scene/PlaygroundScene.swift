@@ -8,24 +8,24 @@
 import SwiftUI
 
 final class PlaygroundScene {
-  private(set) var pointClouds: [PointCloudFile] = []
+  private(set) var pointClouds: [PointCloud] = []
   private(set) var filePaths: [String] = []
   var sceneModifiedCallbacks: [String: (PlaygroundScene) -> Void] = [:]
-
+  
   func color(for filepath: String) -> Color? {
     guard let index = filePaths.firstIndex(of: filepath) else {
       return nil
     }
     return pointClouds[index].color
   }
-
+  
   func pointSize(for filepath: String) -> Float? {
     guard let index = filePaths.firstIndex(of: filepath) else {
       return nil
     }
     return pointClouds[index].pointSize
   }
-
+  
   func updateColor(_ color: Color, for filepath: String) {
     guard let index = filePaths.firstIndex(of: filepath) else {
       return
@@ -33,7 +33,7 @@ final class PlaygroundScene {
     pointClouds[index].color = color
     notifySceneModified()
   }
-
+  
   func updatePointSize(_ pointSize: Float, for filepath: String) {
     guard let index = filePaths.firstIndex(of: filepath) else {
       return
@@ -47,8 +47,18 @@ final class PlaygroundScene {
       return
     }
     
-    let pointCloud = PointCloudFile()
-    guard pointCloud.createFrom(filePath: filepath) else {
+    let pointCloud: PointCloud?
+    
+    if filepath.hasSuffix(".laz") || filepath.hasSuffix(".las") {
+      let importer = LaszipImporter()
+      pointCloud = importer.importFrom(filePath: filepath)
+    } else {
+      // Treat as a COLMAP text export directory
+      let importer = ColmapImporter()
+      pointCloud = importer.importPointCloud(fromDirectory: filepath)
+    }
+    
+    guard let pointCloud else {
       return
     }
     

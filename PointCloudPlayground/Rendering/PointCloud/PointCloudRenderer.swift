@@ -1,5 +1,4 @@
 import Metal
-import Laszip
 import AppKit
 import SwiftUI
 
@@ -20,7 +19,7 @@ final class PointCloudRenderer: RenderPass {
         colorPixelFormat: MTLPixelFormat,
         depthPixelFormat: MTLPixelFormat,
         scene: PlaygroundScene) {
-    guard let pointVertexFunction = library.makeFunction(name: "point_vertex"),
+    guard let pointVertexFunction = library.makeFunction(name: "point_vertex_shader"),
           let fragmentFunction = library.makeFunction(name: "point_fragment") else {
       return nil
     }
@@ -50,7 +49,8 @@ final class PointCloudRenderer: RenderPass {
   
   private func updateFromScene(s: PlaygroundScene) {
     renderClouds = s.pointClouds.compactMap { pointCloud in
-      guard let points = pointCloud.points, !points.isEmpty else {
+      let points = pointCloud.points
+      guard !points.isEmpty else {
         return nil
       }
       

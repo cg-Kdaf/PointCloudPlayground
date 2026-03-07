@@ -12,14 +12,14 @@ struct PointVertexOut {
   float4 color;
 };
 
-struct laszip_point {
+struct point_vertex {
   float4 position;
 };
 
-vertex PointVertexOut point_vertex(const device laszip_point *vertices [[buffer(0)]],
-                                   constant CameraUniforms &camera [[buffer(1)]],
-                                   constant PointCloudRenderUniforms &uniforms [[buffer(2)]],
-                                   uint vertexID [[vertex_id]]) {
+vertex PointVertexOut point_vertex_shader(const device point_vertex *vertices [[buffer(0)]],
+                                          constant CameraUniforms &camera [[buffer(1)]],
+                                          constant PointCloudRenderUniforms &uniforms [[buffer(2)]],
+                                          uint vertexID [[vertex_id]]) {
   PointVertexOut out;
   float4 worldPosition = float4(vertices[vertexID].position.xyz, 1.0);
   out.position = camera.viewProjectionMatrix * worldPosition;
