@@ -3,6 +3,11 @@ import simd
 
 enum TransformMode { case translate, rotate, scale }
 enum AxisConstraint { case none, x, y, z }
+enum TransformReferenceMode: String, CaseIterable, Identifiable {
+  case objectCenter = "Object Center"
+  case worldOrigin = "World Origin"
+  var id: String { rawValue }
+}
 
 final class TransformController {
   private(set) var isActive = false
@@ -14,6 +19,8 @@ final class TransformController {
   private var savedTranslation: SIMD3<Float> = .zero
   private var savedRotation: SIMD3<Float> = .zero
   private var savedScale: SIMD3<Float> = .one
+
+  var referenceMode: TransformReferenceMode = .objectCenter
 
   // Set each frame by the renderer
   var cameraDistance: Float = 30.0
@@ -67,17 +74,32 @@ final class TransformController {
       let rotAxis = axis == .none ? cameraForward : worldAxis(axis)
       let current = simd_float4x4.fromEulerZYX(obj.rotation)
       let delta = simd_float4x4.rotation(axis: rotAxis, angle: angle)
-      obj.rotation = simd_float4x4.eulerAnglesZYX(from: delta * current)
+      if referenceMode == .objectCenter {
+        obj.rotation = simd_float4x4.eulerAnglesZYX(from: delta * current)
+      } else {
+        // Rotate object and its position around world origin.
+        let next = delta * current
+        obj.rotation = simd_float4x4.eulerAnglesZYX(from: next)
+        let p = delta * SIMD4<Float>(obj.translation, 1)
+        obj.translation = SIMD3<Float>(p.x, p.y, p.z)
+      }
 
     case .scale:
       let d: Float
       if axis == .none {
         d = screenDelta.x * speed * 0.01
-        obj.scale = obj.scale * (1.0 + d)
+        let f = 1.0 + d
+        obj.scale = obj.scale * f
+        if referenceMode == .worldOrigin {
+          obj.translation = obj.translation * f
+        }
       } else {
         d = projectedDelta(worldAxis: worldAxis(axis), screenDelta: screenDelta) * speed * 0.01
         let mask = worldAxis(axis)
         obj.scale = obj.scale + mask * d * obj.scale
+        if referenceMode == .worldOrigin {
+          obj.translation = obj.translation + mask * d * obj.translation
+        }
       }
     }
   }
@@ -89,7 +111,8 @@ final class TransformController {
     guard isActive else { return "" }
     let m = mode == .translate ? "Grab" : mode == .rotate ? "Rotate" : "Scale"
     let a = axis == .x ? " X" : axis == .y ? " Y" : axis == .z ? " Z" : ""
-    return "\(m)\(a)  |  X/Y/Z  |  Enter/Click  |  Esc/RClick"
+    let r = referenceMode == .objectCenter ? "Object" : "World"
+    return "\(m)\(a) [\(r)]  |  X/Y/Z  |  Enter/Click  |  Esc/RClick"
   }
 
   private func worldAxis(_ a: AxisConstraint) -> SIMD3<Float> {

@@ -5,6 +5,7 @@ import simd
 
 struct MetalView: NSViewRepresentable {
   let scene: PlaygroundScene
+  @Binding var transformReferenceMode: TransformReferenceMode
   
   func makeNSView(context: Context) -> OrbitMTKView {
     let mtkView = OrbitMTKView(frame: .zero)
@@ -35,6 +36,7 @@ struct MetalView: NSViewRepresentable {
   }
   
   func updateNSView(_ nsView: OrbitMTKView, context: Context) {
+    nsView.transformController?.referenceMode = transformReferenceMode
   }
   
   func makeCoordinator() -> Coordinator {

@@ -31,6 +31,7 @@ struct ContentView: View {
   @StateObject private var scene = PlaygroundScene()
   @State private var isLazImporterPresented = false
   @State private var isColmapFolderPresented = false
+  @State private var transformReferenceMode: TransformReferenceMode = .objectCenter
   
   private let lazType = UTType(filenameExtension: "laz") ?? .data
   
@@ -76,6 +77,11 @@ struct ContentView: View {
         
         Divider()
         
+        // Transform tool panel
+        TransformToolPanel(referenceMode: $transformReferenceMode)
+        
+        Divider()
+        
         // Main outliner
         SceneOutlinerView(scene: scene)
       }
@@ -84,7 +90,7 @@ struct ContentView: View {
       
       Divider()
       
-      MetalView(scene: scene)
+      MetalView(scene: scene, transformReferenceMode: $transformReferenceMode)
     }
   }
   
