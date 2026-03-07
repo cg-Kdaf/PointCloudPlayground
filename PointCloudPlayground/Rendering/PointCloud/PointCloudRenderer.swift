@@ -48,14 +48,18 @@ final class PointCloudRenderer: RenderPass {
   }
   
   private func updateFromScene(s: PlaygroundScene) {
-    renderClouds = s.pointClouds.compactMap { pointCloud in
-      let points = pointCloud.points
+    renderClouds = s.getVisibleObjects().compactMap { sceneObject in
+      guard let pointCloudData = sceneObject.asPointCloudData else {
+        return nil
+      }
+      
+      let points = pointCloudData.points
       guard !points.isEmpty else {
         return nil
       }
       
-      let color = NSColor(pointCloud.color).usingColorSpace(.sRGB) ?? .white
-      let bbox = pointCloud.boundingBox
+      let color = NSColor(pointCloudData.color).usingColorSpace(.sRGB) ?? .white
+      let bbox = pointCloudData.boundingBox
       let uniforms = PointCloudRenderUniforms(
         bboxMaxX: bbox?.max_x ?? 1.0,
         bboxMinX: bbox?.min_x ?? 0.0,
@@ -63,7 +67,7 @@ final class PointCloudRenderer: RenderPass {
         bboxMinY: bbox?.min_y ?? 0.0,
         bboxMaxZ: bbox?.max_z ?? 1.0,
         bboxMinZ: bbox?.min_z ?? 0.0,
-        pointSize: pointCloud.pointSize,
+        pointSize: pointCloudData.pointSize,
         colorR: Float(color.redComponent),
         colorG: Float(color.greenComponent),
         colorB: Float(color.blueComponent),

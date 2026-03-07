@@ -2,8 +2,11 @@
 //  PointCloud.swift
 //  PointCloudPlayground
 //
+//  Created by Colin Marmond on 7/03/2026.
+//
 
 import SwiftUI
+import Combine
 
 struct PointVertex {
   let position: SIMD4<Float>
@@ -18,13 +21,14 @@ struct BoundingBox {
   let min_z: Float
 }
 
-final class PointCloud {
-  var boundingBox: BoundingBox? = nil
-  var color: Color = .white
-  var pointSize: Float = 1.0
-  var points: [PointVertex] = []
-  var pointsCount: Int = 0
-  private(set) var center: SIMD4<Double> = .zero
+final class PointCloudDataBlock: DataBlock, ObservableObject {
+  let points: [PointVertex]
+  let pointsCount: Int
+  let center: SIMD4<Double>
+  let boundingBox: BoundingBox?
+  
+  @Published var color: Color = .white
+  @Published var pointSize: Float = 1.0
   
   init(points: [PointVertex], pointsCount: Int, center: SIMD4<Double>, boundingBox: BoundingBox?) {
     self.points = points

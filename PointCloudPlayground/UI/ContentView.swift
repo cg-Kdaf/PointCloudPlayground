@@ -28,10 +28,9 @@ struct ContentView: View {
   @Query(sort: \PointCloudEntry.createdAt) private var pointClouds: [PointCloudEntry]
   
   @State private var selectedPath: String?
-  @State private var displayedPaths: [String] = []
+  @StateObject private var scene = PlaygroundScene()
   @State private var isLazImporterPresented = false
   @State private var isColmapFolderPresented = false
-  private let scene = PlaygroundScene()
   
   private let lazType = UTType(filenameExtension: "laz") ?? .data
   
@@ -41,107 +40,51 @@ struct ContentView: View {
   
   var body: some View {
     HStack(spacing: 0) {
-      VStack(alignment: .leading, spacing: 12) {
-        Text("Point Clouds")
-          .font(.headline)
-        
-        Picker("Available Files", selection: $selectedPath) {
-          Text("None")
-            .tag(Optional<String>.none)
-          ForEach(pointClouds, id: \.persistentModelID) { cloud in
-            Text(URL(fileURLWithPath: cloud.filePath).lastPathComponent)
-              .tag(Optional(cloud.filePath))
-          }
-        }
-        
-        if let selectedCloud {
-          Button("Add to Displayed") {
-            let path = selectedCloud.filePath
-            guard !displayedPaths.contains(path) else {
-              return
-            }
-            displayedPaths.append(path)
-            scene.addCloud(filepath: path)
-          }
-          
-          Button("Remove", role: .destructive) {
-            if displayedPaths.contains(selectedCloud.filePath) {
-              displayedPaths.removeAll { $0 == selectedCloud.filePath }
-              scene.removeCloud(filepath: selectedCloud.filePath)
-            }
-            modelContext.delete(selectedCloud)
-            selectedPath = nil
-          }
-        }
-        
-        if !displayedPaths.isEmpty {
-          Divider()
-          
-          Text("Displayed in Session")
+      VStack(spacing: 0) {
+        // Top section: Import buttons
+        VStack(alignment: .leading, spacing: 8) {
+          Text("Import")
             .font(.subheadline)
+            .fontWeight(.semibold)
+            .padding(.horizontal, 12)
+            .padding(.top, 12)
           
-          ForEach(displayedPaths, id: \.self) { path in
-            VStack(alignment: .leading, spacing: 6) {
-              HStack {
-                Text(URL(fileURLWithPath: path).lastPathComponent)
-                  .lineLimit(1)
-                Spacer()
-                Button("Remove") {
-                  displayedPaths.removeAll { $0 == path }
-                  scene.removeCloud(filepath: path)
-                }
-              }
-              
-              HStack(spacing: 8) {
-                Text("Color")
-                  .font(.caption)
-                ColorPicker("", selection: colorBinding(for: path), supportsOpacity: true)
-                  .labelsHidden()
-              }
-              
-              HStack(spacing: 8) {
-                Text("Size")
-                  .font(.caption)
-                Slider(value: pointSizeBinding(for: path), in: 0.5...20.0)
-                Text(String(format: "%.1f", scene.pointSize(for: path) ?? 1.0))
-                  .font(.caption.monospacedDigit())
-                  .frame(width: 36, alignment: .trailing)
-              }
+          HStack(spacing: 8) {
+            Button(action: { isLazImporterPresented = true }) {
+              Label("LAZ File", systemImage: "doc.badge.plus")
+                .frame(maxWidth: .infinity)
             }
+            .buttonStyle(.bordered)
+            .fileImporter(isPresented: $isLazImporterPresented,
+                          allowedContentTypes: [lazType],
+                          allowsMultipleSelection: false,
+                          onCompletion: handleImportResult)
+            
+            Button(action: { isColmapFolderPresented = true }) {
+              Label("COLMAP", systemImage: "folder.badge.plus")
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            .fileImporter(isPresented: $isColmapFolderPresented,
+                          allowedContentTypes: [.folder],
+                          allowsMultipleSelection: false,
+                          onCompletion: handleImportResult)
           }
+          .padding(.horizontal, 12)
+          .padding(.bottom, 12)
         }
         
         Divider()
         
-        Button("Add .laz file") {
-          isLazImporterPresented = true
-        }
-        
-        Button("Add COLMAP folder") {
-          isColmapFolderPresented = true
-        }
-        
-        Spacer()
+        // Main outliner
+        SceneOutlinerView(scene: scene)
       }
-      .padding(12)
-      .frame(width: 300)
+      .frame(width: 320)
+      .background(Color(nsColor: .controlBackgroundColor))
       
       Divider()
       
       MetalView(scene: scene)
-    }
-    .fileImporter(isPresented: $isLazImporterPresented,
-                  allowedContentTypes: [lazType],
-                  allowsMultipleSelection: false,
-                  onCompletion: handleImportResult)
-    .fileImporter(isPresented: $isColmapFolderPresented,
-                  allowedContentTypes: [.folder],
-                  allowsMultipleSelection: false,
-                  onCompletion: handleImportResult)
-    .onAppear {
-      if selectedPath == nil {
-        selectedPath = pointClouds.first?.filePath
-      }
     }
   }
   
@@ -151,28 +94,31 @@ struct ContentView: View {
       return
     }
     
-    if let existing = pointClouds.first(where: { $0.filePath == url.path }) {
-      selectedPath = existing.filePath
+    let path = url.path
+    
+    // Check if already loaded in scene
+    if scene.filePaths.contains(path) {
       return
     }
     
-    let entry = PointCloudEntry(filePath: url.path)
+    // Check if already in database
+    if let existing = pointClouds.first(where: { $0.filePath == path }) {
+      scene.addCloud(filepath: path)
+      return
+    }
+    
+    // Add to database
+    let entry = PointCloudEntry(filePath: path)
     modelContext.insert(entry)
-    selectedPath = entry.filePath
-  }
-  
-  private func colorBinding(for path: String) -> Binding<Color> {
-    Binding(
-      get: { scene.color(for: path) ?? .white },
-      set: { scene.updateColor($0, for: path) }
-    )
-  }
-  
-  private func pointSizeBinding(for path: String) -> Binding<Float> {
-    Binding(
-      get: { scene.pointSize(for: path) ?? 1.0 },
-      set: { scene.updatePointSize($0, for: path) }
-    )
+    
+    do {
+      try modelContext.save()
+    } catch {
+      print("Failed to save database entry: \(error)")
+    }
+    
+    // Add to scene
+    scene.addCloud(filepath: path)
   }
 }
 

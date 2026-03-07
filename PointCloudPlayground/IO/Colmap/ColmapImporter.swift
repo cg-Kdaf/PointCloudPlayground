@@ -16,9 +16,9 @@ struct CameraPose {
 
 final class ColmapImporter {
   
-  /// Imports a PointCloud from a COLMAP text export directory containing points3D.txt.
+  /// Imports a point cloud from a COLMAP text export directory containing points3D.txt.
   /// `path` should be the directory path (e.g. .../sparse/text_export/).
-  func importPointCloud(fromDirectory path: String) -> PointCloud? {
+  func importPointCloud(fromDirectory path: String) -> PointCloudDataBlock? {
     let pointsFile = (path as NSString).appendingPathComponent("points3D.txt")
     guard let content = try? String(contentsOfFile: pointsFile, encoding: .utf8) else {
       print("ColmapImporter: could not read \(pointsFile)")
@@ -69,7 +69,7 @@ final class ColmapImporter {
       max_z: Float(maxZ - center.z), min_z: Float(minZ - center.z)
     )
     
-    return PointCloud(points: vertices, pointsCount: vertices.count, center: center, boundingBox: boundingBox)
+    return PointCloudDataBlock(points: vertices, pointsCount: vertices.count, center: center, boundingBox: boundingBox)
   }
   
   // Parses images.txt to get Camera Poses

@@ -6,78 +6,103 @@
 //
 
 import SwiftUI
+import Combine
 
-final class PlaygroundScene {
-  private(set) var pointClouds: [PointCloud] = []
+final class PlaygroundScene: ObservableObject {
+  @Published private(set) var objects: [SceneObject] = []
   private(set) var filePaths: [String] = []
   var sceneModifiedCallbacks: [String: (PlaygroundScene) -> Void] = [:]
+  private var dataBlockObservations: [UUID: AnyCancellable] = [:]
   
-  func color(for filepath: String) -> Color? {
-    guard let index = filePaths.firstIndex(of: filepath) else {
-      return nil
-    }
-    return pointClouds[index].color
-  }
-  
-  func pointSize(for filepath: String) -> Float? {
-    guard let index = filePaths.firstIndex(of: filepath) else {
-      return nil
-    }
-    return pointClouds[index].pointSize
-  }
-  
-  func updateColor(_ color: Color, for filepath: String) {
-    guard let index = filePaths.firstIndex(of: filepath) else {
-      return
-    }
-    pointClouds[index].color = color
-    notifySceneModified()
-  }
-  
-  func updatePointSize(_ pointSize: Float, for filepath: String) {
-    guard let index = filePaths.firstIndex(of: filepath) else {
-      return
-    }
-    pointClouds[index].pointSize = pointSize
-    notifySceneModified()
-  }
+  @Published var selectedObjectId: UUID? = nil
   
   func addCloud(filepath: String) {
     guard !filePaths.contains(filepath) else {
       return
     }
     
-    let pointCloud: PointCloud?
+    let data: PointCloudDataBlock?
     
     if filepath.hasSuffix(".laz") || filepath.hasSuffix(".las") {
       let importer = LaszipImporter()
-      pointCloud = importer.importFrom(filePath: filepath)
+      data = importer.importFrom(filePath: filepath)
     } else {
       // Treat as a COLMAP text export directory
       let importer = ColmapImporter()
-      pointCloud = importer.importPointCloud(fromDirectory: filepath)
+      data = importer.importPointCloud(fromDirectory: filepath)
     }
     
-    guard let pointCloud else {
+    guard let data else {
       return
     }
     
-    pointClouds.append(pointCloud)
+    let name = URL(fileURLWithPath: filepath).lastPathComponent
+    let object = SceneObject(name: name, dataBlock: data, type: .pointCloud)
+    
+    // Subscribe to changes in PointCloudDataBlock properties
+    let observation = Publishers.Merge(
+      data.$color.map { _ in () },
+      data.$pointSize.map { _ in () }
+    )
+    .sink { [weak self] _ in
+      self?.notifySceneModified()
+    }
+    
+    dataBlockObservations[object.id] = observation
+    objects.append(object)
     filePaths.append(filepath)
+    
     notifySceneModified()
   }
   
-  func removeCloud(filepath: String) {
-    guard let index = filePaths.firstIndex(of: filepath) else {
+  func removeObject(_ id: UUID) {
+    guard let index = objects.firstIndex(where: { $0.id == id }) else {
       return
     }
     
+    // Clean up observation
+    dataBlockObservations.removeValue(forKey: id)
+    
     filePaths.remove(at: index)
-    pointClouds.remove(at: index)
+    objects.remove(at: index)
+    
+    if selectedObjectId == id {
+      selectedObjectId = nil
+    }
+    
     notifySceneModified()
+  }
+  
+  func selectObject(id: UUID) {
+    selectedObjectId = id
+  }
+  
+  func deselectAll() {
+    selectedObjectId = nil
+  }
+  
+  func toggleVisibility(for id: UUID) {
+    if let object = objects.first(where: { $0.id == id }) {
+      object.isVisible.toggle()
+      notifySceneModified()
+    }
+  }
+  
+  func setVisibility(_ visible: Bool, for id: UUID) {
+    if let object = objects.first(where: { $0.id == id }) {
+      object.isVisible = visible
+      notifySceneModified()
+    }
+  }
+  
+  func getVisibleObjects() -> [SceneObject] {
+    objects.filter { $0.isVisible }
   }
   
   private func notifySceneModified() {
     for cb in sceneModifiedCallbacks.values { cb(self) }
+    DispatchQueue.main.async {
+      self.objectWillChange.send()
+    }
   }
 }

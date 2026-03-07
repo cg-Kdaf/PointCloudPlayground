@@ -24,7 +24,7 @@ final class LaszipImporter {
   private var handle: laszip_POINTER?
   private var isReaderOpen = false
   
-  func importFrom(filePath: String) -> PointCloud? {
+  func importFrom(filePath: String) -> PointCloudDataBlock? {
     do {
       var pointer: laszip_POINTER?
       guard laszip_create(&pointer) == 0, pointer != nil else {
@@ -66,7 +66,7 @@ final class LaszipImporter {
       })
       
       cleanup()
-      return PointCloud(points: points, pointsCount: pointsCount, center: center, boundingBox: boundingBox)
+      return PointCloudDataBlock(points: points, pointsCount: pointsCount, center: center, boundingBox: boundingBox)
     } catch {
       print("Import failed: \(error.localizedDescription)")
       cleanup()
