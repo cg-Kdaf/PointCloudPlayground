@@ -49,7 +49,7 @@ final class PointCloudRenderer: RenderPass {
   }
   
   private func updateFromScene(s: PlaygroundScene) {
-    renderClouds = s.getVisibleObjects().compactMap { sceneObject in
+    renderClouds = s.allVisibleObjects.compactMap { sceneObject in
       guard let pointCloudData = sceneObject.asPointCloudData else {
         return nil
       }
@@ -98,7 +98,7 @@ final class PointCloudRenderer: RenderPass {
 
     // Update model matrix per cloud each frame (transforms may change)
     var cloudIndex = 0
-    for sceneObject in scene.getVisibleObjects() {
+    for sceneObject in scene.allVisibleObjects {
       guard sceneObject.asPointCloudData != nil, cloudIndex < renderClouds.count else {
         continue
       }

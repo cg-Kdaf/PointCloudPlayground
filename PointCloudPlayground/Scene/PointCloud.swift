@@ -26,14 +26,16 @@ final class PointCloudDataBlock: DataBlock, ObservableObject {
   let pointsCount: Int
   let center: SIMD4<Double>
   let boundingBox: BoundingBox?
+  let filePath: String?
   
   @Published var color: Color = .white
   @Published var pointSize: Float = 1.0
   
-  init(points: [PointVertex], pointsCount: Int, center: SIMD4<Double>, boundingBox: BoundingBox?) {
+  init(points: [PointVertex], pointsCount: Int, center: SIMD4<Double>, boundingBox: BoundingBox?, filePath: String? = nil) {
     self.points = points
     self.pointsCount = pointsCount
     self.center = center
     self.boundingBox = boundingBox
+    self.filePath = filePath
   }
 }

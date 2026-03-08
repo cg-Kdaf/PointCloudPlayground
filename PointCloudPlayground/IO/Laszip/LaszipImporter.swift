@@ -66,7 +66,7 @@ final class LaszipImporter {
       })
       
       cleanup()
-      return PointCloudDataBlock(points: points, pointsCount: pointsCount, center: center, boundingBox: boundingBox)
+      return PointCloudDataBlock(points: points, pointsCount: pointsCount, center: center, boundingBox: boundingBox, filePath: filePath)
     } catch {
       print("Import failed: \(error.localizedDescription)")
       cleanup()

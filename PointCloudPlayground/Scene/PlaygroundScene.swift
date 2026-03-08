@@ -5,29 +5,63 @@
 //  Created by Colin Marmond on 24/02/2026.
 //
 
-import SwiftUI
+import Foundation
 import Combine
 
 final class PlaygroundScene: ObservableObject {
-  @Published private(set) var objects: [SceneObject] = []
-  private(set) var filePaths: [String] = []
+  @Published var rootGroup: SceneGroup = .init(name: "Root")
+  @Published var selectedIds: [UUID] = []
+  
   var sceneModifiedCallbacks: [String: (PlaygroundScene) -> Void] = [:]
-  private var dataBlockObservations: [UUID: AnyCancellable] = [:]
+  var activeDragPayload: SceneTreeDragPayload?
   
-  @Published var selectedObjectId: UUID? = nil
+  var allObjects: [SceneObject] {rootGroup.allObjects}
+  var allVisibleObjects: [SceneObject] {allObjects.filter { $0.isVisible }}
+  var allGroups: [SceneGroup] {rootGroup.allGroups}
   
-  func addCloud(filepath: String) {
-    guard !filePaths.contains(filepath) else {
-      return
+  var selectableIds: [UUID] {allGroups.map(\.id) + allObjects.map(\.id)}
+  
+  var selectedObject: SceneObject? {
+    guard selectedIds.count == 1,
+          let selectedId = selectedIds.first else {
+      return nil
     }
     
+    return rootGroup.object(withId: selectedId)
+  }
+  
+  var selectedPointCloudObject: SceneObject? {
+    guard let selectedObject,
+          selectedObject.asPointCloudData != nil else {
+      return nil
+    }
+    
+    return selectedObject
+  }
+  
+  private var dataBlockObservations: [UUID: AnyCancellable] = [:]
+  
+  func addGroup(named name: String = "New Group", parentGroupId: UUID? = nil) {
+    let group = SceneGroup(name: name)
+    
+    if let parentGroupId {
+      if rootGroup.appendGroup(group, toGroupWithId: parentGroupId) {
+        notifySceneModified()
+        return
+      }
+    }
+    
+    rootGroup.childGroups.append(group)
+    notifySceneModified()
+  }
+  
+  func addCloud(filepath: String, toGroupId: UUID? = nil) {
     let data: PointCloudDataBlock?
     
     if filepath.hasSuffix(".laz") || filepath.hasSuffix(".las") {
       let importer = LaszipImporter()
       data = importer.importFrom(filePath: filepath)
     } else {
-      // Treat as a COLMAP text export directory
       let importer = ColmapImporter()
       data = importer.importPointCloud(fromDirectory: filepath)
     }
@@ -39,78 +73,37 @@ final class PlaygroundScene: ObservableObject {
     let name = URL(fileURLWithPath: filepath).lastPathComponent
     let object = SceneObject(name: name, dataBlock: data, type: .pointCloud)
     
-    // Subscribe to changes in PointCloudDataBlock properties
-    let dataObservation = Publishers.Merge(
-      data.$color.map { _ in () },
-      data.$pointSize.map { _ in () }
-    )
+    let observationPublishers: [AnyPublisher<Void, Never>] = [
+      data.$color.map { _ in () }.eraseToAnyPublisher(),
+      data.$pointSize.map { _ in () }.eraseToAnyPublisher(),
+      object.$name.map { _ in () }.eraseToAnyPublisher(),
+      object.$isVisible.map { _ in () }.eraseToAnyPublisher(),
+      object.$translation.map { _ in () }.eraseToAnyPublisher(),
+      object.$rotation.map { _ in () }.eraseToAnyPublisher(),
+      object.$scale.map { _ in () }.eraseToAnyPublisher()
+    ]
     
-    // Subscribe to changes in SceneObject transform properties
-    let transformObservation = Publishers.Merge3(
-      object.$translation.map { _ in () },
-      object.$rotation.map { _ in () },
-      object.$scale.map { _ in () }
-    )
-    
-    let observation = Publishers.Merge(dataObservation, transformObservation)
-    .sink { [weak self] _ in
-      self?.notifySceneModified()
-    }
+    let observation = Publishers.MergeMany(observationPublishers)
+      .sink { [weak self] _ in
+        self?.notifySceneModified()
+      }
     
     dataBlockObservations[object.id] = observation
-    objects.append(object)
-    filePaths.append(filepath)
     
+    rootGroup.objects.append(object)
     notifySceneModified()
   }
   
   func removeObject(_ id: UUID) {
-    guard let index = objects.firstIndex(where: { $0.id == id }) else {
+    if rootGroup.removeObject(withId: id) != nil {
+      dataBlockObservations.removeValue(forKey: id)
+      selectedIds.removeAll { $0 == id }
+      notifySceneModified()
       return
     }
-    
-    // Clean up observation
-    dataBlockObservations.removeValue(forKey: id)
-    
-    filePaths.remove(at: index)
-    objects.remove(at: index)
-    
-    if selectedObjectId == id {
-      selectedObjectId = nil
-    }
-    
-    notifySceneModified()
   }
   
-  func selectObject(id: UUID) {
-    selectedObjectId = id
-    notifySceneModified()
-  }
-  
-  func deselectAll() {
-    selectedObjectId = nil
-    notifySceneModified()
-  }
-  
-  func toggleVisibility(for id: UUID) {
-    if let object = objects.first(where: { $0.id == id }) {
-      object.isVisible.toggle()
-      notifySceneModified()
-    }
-  }
-  
-  func setVisibility(_ visible: Bool, for id: UUID) {
-    if let object = objects.first(where: { $0.id == id }) {
-      object.isVisible = visible
-      notifySceneModified()
-    }
-  }
-  
-  func getVisibleObjects() -> [SceneObject] {
-    objects.filter { $0.isVisible }
-  }
-  
-  private func notifySceneModified() {
+  func notifySceneModified() {
     for cb in sceneModifiedCallbacks.values { cb(self) }
     DispatchQueue.main.async {
       self.objectWillChange.send()

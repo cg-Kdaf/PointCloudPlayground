@@ -11,22 +11,7 @@ import UniformTypeIdentifiers
 import AppKit
 import simd
 
-@Model
-final class PointCloudEntry {
-  var filePath: String
-  var createdAt: Date
-  
-  init(filePath: String,
-       createdAt: Date = .now) {
-    self.filePath = filePath
-    self.createdAt = createdAt
-  }
-}
-
 struct ContentView: View {
-  @Environment(\.modelContext) private var modelContext
-  @Query(sort: \PointCloudEntry.createdAt) private var pointClouds: [PointCloudEntry]
-  
   @State private var selectedPath: String?
   @StateObject private var scene = PlaygroundScene()
   @State private var isLazImporterPresented = false
@@ -34,10 +19,6 @@ struct ContentView: View {
   @State private var transformReferenceMode: TransformReferenceMode = .objectCenter
   
   private let lazType = UTType(filenameExtension: "laz") ?? .data
-  
-  private var selectedCloud: PointCloudEntry? {
-    pointClouds.first { $0.filePath == selectedPath }
-  }
   
   var body: some View {
     HStack(spacing: 0) {
@@ -101,27 +82,6 @@ struct ContentView: View {
     }
     
     let path = url.path
-    
-    // Check if already loaded in scene
-    if scene.filePaths.contains(path) {
-      return
-    }
-    
-    // Check if already in database
-    if let existing = pointClouds.first(where: { $0.filePath == path }) {
-      scene.addCloud(filepath: path)
-      return
-    }
-    
-    // Add to database
-    let entry = PointCloudEntry(filePath: path)
-    modelContext.insert(entry)
-    
-    do {
-      try modelContext.save()
-    } catch {
-      print("Failed to save database entry: \(error)")
-    }
     
     // Add to scene
     scene.addCloud(filepath: path)

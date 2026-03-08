@@ -78,8 +78,7 @@ final class GizmoRenderer {
   }
 
   private func updateBoundingBox(scene: PlaygroundScene) {
-    guard let selectedId = scene.selectedObjectId,
-          let selectedObject = scene.objects.first(where: { $0.id == selectedId }),
+    guard let selectedObject = scene.selectedPointCloudObject,
           let pointCloudData = selectedObject.asPointCloudData,
           let bbox = pointCloudData.boundingBox else {
       bboxVertexBuffer = nil

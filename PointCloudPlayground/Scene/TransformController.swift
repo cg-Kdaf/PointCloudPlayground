@@ -31,8 +31,8 @@ final class TransformController {
   init(scene: PlaygroundScene) { self.scene = scene }
 
   func begin(mode: TransformMode) -> Bool {
-    guard let scene, let id = scene.selectedObjectId,
-          let obj = scene.objects.first(where: { $0.id == id }) else { return false }
+    guard let scene,
+        let obj = scene.selectedObject else { return false }
     self.mode = mode
     self.axis = .none
     self.target = obj

@@ -69,7 +69,7 @@ final class ColmapImporter {
       max_z: Float(maxZ - center.z), min_z: Float(minZ - center.z)
     )
     
-    return PointCloudDataBlock(points: vertices, pointsCount: vertices.count, center: center, boundingBox: boundingBox)
+    return PointCloudDataBlock(points: vertices, pointsCount: vertices.count, center: center, boundingBox: boundingBox, filePath: path)
   }
   
   // Parses images.txt to get Camera Poses
