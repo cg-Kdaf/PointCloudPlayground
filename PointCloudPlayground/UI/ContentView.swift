@@ -17,8 +17,13 @@ struct ContentView: View {
   @State private var isLazImporterPresented = false
   @State private var isColmapFolderPresented = false
   @State private var transformReferenceMode: TransformReferenceMode = .objectCenter
+  @State private var isSavePresented = false
+  @State private var isLoadPresented = false
+  @State private var saveErrorMessage: String?
+  @State private var loadErrorMessage: String?
   
   private let lazType = UTType(filenameExtension: "laz") ?? .data
+  private let jsonType = UTType(filenameExtension: "json") ?? .data
   
   var body: some View {
     HStack(spacing: 0) {

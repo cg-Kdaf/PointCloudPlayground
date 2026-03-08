@@ -9,9 +9,9 @@ import SwiftUI
 import Combine
 import simd
 
-protocol DataBlock {}
+class DataBlock: Codable {}
 
-enum DataBlockType {
+enum DataBlockType: String, Codable {
   case pointCloud
   case camera
   
@@ -25,8 +25,8 @@ enum DataBlockType {
   }
 }
 
-final class SceneObject: ObservableObject, Identifiable, Transformable {
-  let id: UUID
+final class SceneObject: Codable, ObservableObject, Identifiable, Transformable {
+  let id: UUID = .init()
   let dataBlockType: DataBlockType
   let data: DataBlock
   
@@ -43,7 +43,6 @@ final class SceneObject: ObservableObject, Identifiable, Transformable {
   }
   
   init(name: String, dataBlock: DataBlock, type: DataBlockType) {
-    self.id = UUID()
     self.name = name
     self.data = dataBlock
     self.dataBlockType = type
@@ -58,5 +57,39 @@ final class SceneObject: ObservableObject, Identifiable, Transformable {
   var asCameraData: CameraDataBlock? {
     guard dataBlockType == .camera else { return nil }
     return data as? CameraDataBlock
+  }
+  
+  enum CodingKeys: String, CodingKey {
+    case id
+    case name
+    case isVisible
+    case translation
+    case rotation
+    case scale
+    
+    case dataBlockType
+    case data
+  }
+  
+  required init(from decoder: any Decoder) throws {
+    let values = try decoder.container(keyedBy: CodingKeys.self)
+    name = try values.decode(String.self, forKey: .name)
+    data = try values.decode(DataBlock.self, forKey: .data)
+    dataBlockType = try values.decode(DataBlockType.self, forKey: .dataBlockType)
+    isVisible = try values.decode(Bool.self, forKey: .isVisible)
+    translation = try values.decode(SIMD3<Float>.self, forKey: .translation)
+    rotation = try values.decode(SIMD3<Float>.self, forKey: .rotation)
+    scale = try values.decode(SIMD3<Float>.self, forKey: .scale)
+  }
+  
+  func encode(to encoder: any Encoder) throws {
+    var values = encoder.container(keyedBy: CodingKeys.self)
+    try values.encode(name, forKey: .name)
+    try values.encode(isVisible, forKey: .isVisible)
+    try values.encode(translation, forKey: .translation)
+    try values.encode(rotation, forKey: .rotation)
+    try values.encode(scale, forKey: .scale)
+    try values.encode(data, forKey: .data)
+    try values.encode(dataBlockType, forKey: .dataBlockType)
   }
 }

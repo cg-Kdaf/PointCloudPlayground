@@ -19,7 +19,7 @@ struct SceneTreeDragPayload: Codable, Equatable {
   let id: UUID
 }
 
-final class SceneGroup: ObservableObject, Identifiable, Transformable {
+final class SceneGroup: Codable, ObservableObject, Identifiable, Transformable {
   let id = UUID()
   @Published var name: String
   @Published var childGroups: [SceneGroup]
@@ -238,5 +238,34 @@ final class SceneGroup: ObservableObject, Identifiable, Transformable {
     }
     
     return result
+  }
+  
+  enum CodingKeys: String, CodingKey {
+    case name
+    case childGroups
+    case objects
+    case translation
+    case rotation
+    case scale
+  }
+  
+  required init(from decoder: Decoder) throws {
+    let values = try decoder.container(keyedBy: CodingKeys.self)
+    name = try values.decode(String.self, forKey: .name)
+    childGroups = try values.decode([SceneGroup].self, forKey: .childGroups)
+    objects = try values.decode([SceneObject].self, forKey: .objects)
+    translation = try values.decode(SIMD3<Float>.self, forKey: .translation)
+    rotation = try values.decode(SIMD3<Float>.self, forKey: .rotation)
+    scale = try values.decode(SIMD3<Float>.self, forKey: .scale)
+  }
+  
+  func encode(to encoder: Encoder) throws {
+    var values = encoder.container(keyedBy: CodingKeys.self)
+    try values.encode(name, forKey: .name)
+    try values.encode(childGroups, forKey: .childGroups)
+    try values.encode(objects, forKey: .objects)
+    try values.encode(translation, forKey: .translation)
+    try values.encode(rotation, forKey: .rotation)
+    try values.encode(scale, forKey: .scale)
   }
 }

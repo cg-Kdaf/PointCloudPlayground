@@ -50,5 +50,14 @@ final class PointCloudDataBlock: DataBlock, ObservableObject {
     self.center = center
     self.boundingBox = boundingBox
     self.filePath = filePath
+    super.init()
+  }
+  
+  required init(from decoder: any Decoder) throws {
+    fatalError("init(from:) has not been implemented")
+  }
+  
+  override func encode(to encoder: any Encoder) throws {
+    fatalError("encode(to:) has not been implemented")
   }
 }

@@ -17,5 +17,14 @@ final class CameraDataBlock: DataBlock, ObservableObject {
     self.position = position
     self.orientation = orientation
     self.fov = fov
+    super.init()
+  }
+  
+  required init(from decoder: any Decoder) throws {
+    fatalError("init(from:) has not been implemented")
+  }
+  
+  override func encode(to encoder: any Encoder) throws {
+    fatalError("encode(to:) has not been implemented")
   }
 }
