@@ -19,6 +19,19 @@ struct BoundingBox {
   let min_y: Float
   let max_z: Float
   let min_z: Float
+  
+  func toPoints() -> [simd_float4] {
+    [
+      simd_float4(min_x, min_y, min_z, 1.0),
+      simd_float4(max_x, min_y, min_z, 1.0),
+      simd_float4(min_x, min_y, max_z, 1.0),
+      simd_float4(max_x, min_y, max_z, 1.0),
+      simd_float4(min_x, max_y, min_z, 1.0),
+      simd_float4(max_x, max_y, min_z, 1.0),
+      simd_float4(min_x, max_y, max_z, 1.0),
+      simd_float4(max_x, max_y, max_z, 1.0),
+    ]
+  }
 }
 
 final class PointCloudDataBlock: DataBlock, ObservableObject {

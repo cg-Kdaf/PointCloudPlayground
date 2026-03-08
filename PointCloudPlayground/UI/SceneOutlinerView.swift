@@ -20,7 +20,7 @@ struct SceneOutlinerView: View {
           .font(.headline.bold())
         
         Spacer()
-
+        
         Button(action: { scene.addGroup() }) {
           Image(systemName: "folder.badge.plus")
             .font(.system(size: 14, weight: .medium))
@@ -71,11 +71,18 @@ struct SceneOutlinerView: View {
       
       Divider()
       
-      if let selectedObject = scene.selectedPointCloudObject {
+      if let selectedGroup = scene.selectedGroup {
+        ScenePropertyPanelView(
+          object: nil,
+          pointCloudData: nil,
+          group: selectedGroup
+        )
+      } else if let selectedObject = scene.selectedPointCloudObject {
         if let pointCloudData = selectedObject.asPointCloudData {
           ScenePropertyPanelView(
             object: selectedObject,
-            pointCloudData: pointCloudData
+            pointCloudData: pointCloudData,
+            group: nil
           )
         }
       }

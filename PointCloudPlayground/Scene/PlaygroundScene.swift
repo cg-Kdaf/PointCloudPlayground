@@ -26,8 +26,15 @@ final class PlaygroundScene: ObservableObject {
           let selectedId = selectedIds.first else {
       return nil
     }
-    
     return rootGroup.object(withId: selectedId)
+  }
+  
+  var selectedGroup: SceneGroup? {
+    guard selectedIds.count == 1,
+          let selectedId = selectedIds.first else {
+      return nil
+    }
+    return rootGroup.group(withId: selectedId)
   }
   
   var selectedPointCloudObject: SceneObject? {
@@ -35,7 +42,6 @@ final class PlaygroundScene: ObservableObject {
           selectedObject.asPointCloudData != nil else {
       return nil
     }
-    
     return selectedObject
   }
   
@@ -43,6 +49,18 @@ final class PlaygroundScene: ObservableObject {
   
   func addGroup(named name: String = "New Group", parentGroupId: UUID? = nil) {
     let group = SceneGroup(name: name)
+    
+    let observationPublishers: [AnyPublisher<Void, Never>] = [
+      group.$scale.map { _ in () }.eraseToAnyPublisher(),
+      group.$rotation.map { _ in () }.eraseToAnyPublisher(),
+      group.$translation.map { _ in () }.eraseToAnyPublisher(),
+    ]
+    
+    let observation = Publishers.MergeMany(observationPublishers)
+      .sink { [weak self] _ in
+        self?.notifySceneModified()
+      }
+    dataBlockObservations[group.id] = observation
     
     if let parentGroupId {
       if rootGroup.appendGroup(group, toGroupWithId: parentGroupId) {

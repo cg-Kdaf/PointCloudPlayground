@@ -95,19 +95,20 @@ final class PointCloudRenderer: RenderPass {
     guard !renderClouds.isEmpty else {
       return
     }
-
+    
     // Update model matrix per cloud each frame (transforms may change)
+    // Calculate hierarchical transformation: parent groups multiplied by object transform
     var cloudIndex = 0
     for sceneObject in scene.allVisibleObjects {
       guard sceneObject.asPointCloudData != nil, cloudIndex < renderClouds.count else {
         continue
       }
-      var model = sceneObject.modelMatrix
+      var hierarchicalMatrix = scene.rootGroup.hierarchicalMatrix(forItemId: sceneObject.id, in: scene.rootGroup)
       renderClouds[cloudIndex].uniformsBuffer.contents()
-        .copyMemory(from: &model, byteCount: MemoryLayout<simd_float4x4>.stride)
+        .copyMemory(from: &hierarchicalMatrix, byteCount: MemoryLayout<simd_float4x4>.stride)
       cloudIndex += 1
     }
-
+    
     encoder.setViewport(frame.viewport)
     encoder.setRenderPipelineState(pipelineState)
     encoder.setDepthStencilState(frame.depth.sceneDepthStencilState)
