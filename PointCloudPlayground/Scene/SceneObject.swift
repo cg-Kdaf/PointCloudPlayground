@@ -25,7 +25,7 @@ enum DataBlockType {
   }
 }
 
-final class SceneObject: ObservableObject, Identifiable {
+final class SceneObject: ObservableObject, Identifiable, Transformable {
   let id: UUID
   let dataBlockType: DataBlockType
   let data: DataBlock

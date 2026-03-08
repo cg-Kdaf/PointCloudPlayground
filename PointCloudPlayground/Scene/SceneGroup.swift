@@ -19,7 +19,7 @@ struct SceneTreeDragPayload: Codable, Equatable {
   let id: UUID
 }
 
-final class SceneGroup: ObservableObject, Identifiable {
+final class SceneGroup: ObservableObject, Identifiable, Transformable {
   let id = UUID()
   @Published var name: String
   @Published var childGroups: [SceneGroup]

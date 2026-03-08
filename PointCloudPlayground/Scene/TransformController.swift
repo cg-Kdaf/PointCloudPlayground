@@ -1,6 +1,12 @@
 import Foundation
 import simd
 
+protocol Transformable {
+  var translation: SIMD3<Float> { get set }
+  var rotation: SIMD3<Float> { get set }
+  var scale: SIMD3<Float> { get set }
+}
+
 enum TransformMode { case translate, rotate, scale }
 enum AxisConstraint { case none, x, y, z }
 enum TransformReferenceMode: String, CaseIterable, Identifiable {
@@ -15,7 +21,7 @@ final class TransformController {
   private(set) var axis: AxisConstraint = .none
 
   private weak var scene: PlaygroundScene?
-  private var target: SceneObject?
+  private var target: Transformable?
   private var savedTranslation: SIMD3<Float> = .zero
   private var savedRotation: SIMD3<Float> = .zero
   private var savedScale: SIMD3<Float> = .one
@@ -31,14 +37,17 @@ final class TransformController {
   init(scene: PlaygroundScene) { self.scene = scene }
 
   func begin(mode: TransformMode) -> Bool {
-    guard let scene,
-        let obj = scene.selectedObject else { return false }
+    guard let scene else {return false}
+    if var obj = scene.selectedObject {
+      self.target = obj
+    } else if var grp = scene.selectedGroup {
+      self.target = grp
+    } else {return false}
     self.mode = mode
     self.axis = .none
-    self.target = obj
-    self.savedTranslation = obj.translation
-    self.savedRotation = obj.rotation
-    self.savedScale = obj.scale
+    self.savedTranslation = target!.translation
+    self.savedRotation = target!.rotation
+    self.savedScale = target!.scale
     self.isActive = true
     return true
   }
@@ -50,7 +59,7 @@ final class TransformController {
   }
 
   func applyMouseDelta(deltaX: Float, deltaY: Float) {
-    guard isActive, let obj = target else { return }
+    guard isActive, var obj = target else { return }
     let screenDelta = SIMD2<Float>(deltaX, -deltaY)
     let speed = cameraDistance * 0.001
 
@@ -134,7 +143,7 @@ final class TransformController {
   }
 
   private func resetToSaved() {
-    guard let obj = target else { return }
+    guard var obj = target else { return }
     obj.translation = savedTranslation
     obj.rotation = savedRotation
     obj.scale = savedScale
