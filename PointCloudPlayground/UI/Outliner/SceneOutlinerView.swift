@@ -32,18 +32,6 @@ struct SceneOutlinerView: View {
           Button("Add Group", action: { scene.addGroup() })
           Button("Select All", action: { scene.setSelection(ids: scene.selectableIds) })
           Button("Deselect All", action: { scene.setSelection(ids: []) })
-          Menu("Visibility") {
-            Button("Show All", action: {
-              for object in scene.allObjects {
-                scene.setVisibility(true, for: object.id)
-              }
-            })
-            Button("Hide All", action: {
-              for object in scene.allObjects {
-                scene.setVisibility(false, for: object.id)
-              }
-            })
-          }
         } label: {
           Image(systemName: "ellipsis.circle")
             .font(.system(size: 14))

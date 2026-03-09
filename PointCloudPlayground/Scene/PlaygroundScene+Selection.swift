@@ -25,7 +25,7 @@ extension PlaygroundScene {
     }
 
     selectedIds = uniqueIds
-    notifySceneModified()
+    SceneUpdate.postGizmoChanged()
   }
 
   func addToSelection(id: UUID) {
@@ -34,7 +34,7 @@ extension PlaygroundScene {
     }
 
     selectedIds.append(id)
-    notifySceneModified()
+    SceneUpdate.postGizmoChanged()
   }
 
   func removeFromSelection(id: UUID) {
@@ -44,7 +44,7 @@ extension PlaygroundScene {
     }
 
     selectedIds = updatedIds
-    notifySceneModified()
+    SceneUpdate.postGizmoChanged()
   }
 
   func toggleSelection(id: UUID) {

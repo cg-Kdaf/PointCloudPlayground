@@ -38,18 +38,20 @@ final class PointCloudRenderer: RenderPass {
     self.device = device
     self.pipelineState = pipelineState
     self.scene = scene
-    scene.sceneModifiedCallbacks["PointCloudRenderer"] = {
-      self.updateFromScene(s: $0)
-    }
-    updateFromScene(s: scene)
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(updatePointClouds(_:)),
+      name: SceneUpdate.ObjectDataBlockChanged,
+      object: nil
+    )
   }
   
   deinit {
-    scene.sceneModifiedCallbacks.removeValue(forKey: "PointCloudRenderer")
+    NotificationCenter.default.removeObserver(self, name: SceneUpdate.ObjectDataBlockChanged, object: nil)
   }
   
-  private func updateFromScene(s: PlaygroundScene) {
-    renderClouds = s.allVisibleObjects.compactMap { sceneObject in
+  @objc private func updatePointClouds(_ n: Notification) {
+    renderClouds = scene.allVisibleObjects.compactMap { sceneObject in
       guard let pointCloudData = sceneObject.asPointCloudData else {
         return nil
       }

@@ -48,15 +48,38 @@ final class GizmoRenderer {
     self.axisVertexBuffer = axisVertexBuffer
     self.axisVertexCount = vertices.count
     self.scene = scene
-    
-    scene.sceneModifiedCallbacks["GizmoRenderer"] = { [weak self] s in
-      self?.updateBoundingBox(scene: s)
-    }
-    updateBoundingBox(scene: scene)
+  
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(updateBoundingBox(_:)),
+      name: SceneUpdate.ObjectDataBlockChanged,
+      object: nil
+    )
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(updateBoundingBox(_:)),
+      name: SceneUpdate.GroupChanged,
+      object: nil
+    )
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(updateBoundingBox(_:)),
+      name: SceneUpdate.ObjectChanged,
+      object: nil
+    )
+    NotificationCenter.default.addObserver(
+      self,
+      selector: #selector(updateBoundingBox(_:)),
+      name: SceneUpdate.GizmoChanged,
+      object: nil
+    )
   }
   
   deinit {
-    scene.sceneModifiedCallbacks.removeValue(forKey: "GizmoRenderer")
+    NotificationCenter.default.removeObserver(self, name: SceneUpdate.ObjectDataBlockChanged, object: nil)
+    NotificationCenter.default.removeObserver(self, name: SceneUpdate.GroupChanged, object: nil)
+    NotificationCenter.default.removeObserver(self, name: SceneUpdate.ObjectChanged, object: nil)
+    NotificationCenter.default.removeObserver(self, name: SceneUpdate.GizmoChanged, object: nil)
   }
   
   func draw(encoder: MTLRenderCommandEncoder, frame: FrameContext) {
@@ -77,7 +100,7 @@ final class GizmoRenderer {
     }
   }
   
-  private func updateBoundingBox(scene: PlaygroundScene) {
+  @objc private func updateBoundingBox(_ n: Notification) {
     var bboxMatrix: simd_float4x4?
     var bbox: BoundingBox?
     

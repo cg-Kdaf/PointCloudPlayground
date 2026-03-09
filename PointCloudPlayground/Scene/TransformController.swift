@@ -38,9 +38,9 @@ final class TransformController {
 
   func begin(mode: TransformMode) -> Bool {
     guard let scene else {return false}
-    if var obj = scene.selectedObject {
+    if let obj = scene.selectedObject {
       self.target = obj
-    } else if var grp = scene.selectedGroup {
+    } else if let grp = scene.selectedGroup {
       self.target = grp
     } else {return false}
     self.mode = mode

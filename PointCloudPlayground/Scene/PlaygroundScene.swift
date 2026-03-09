@@ -12,7 +12,6 @@ final class PlaygroundScene: ObservableObject {
   @Published var rootGroup: SceneGroup = .init(name: "Root")
   @Published var selectedIds: [UUID] = []
   
-  var sceneModifiedCallbacks: [String: (PlaygroundScene) -> Void] = [:]
   var activeDragPayload: SceneTreeDragPayload?
   
   var allObjects: [SceneObject] {rootGroup.allObjects}
@@ -57,20 +56,20 @@ final class PlaygroundScene: ObservableObject {
     ]
     
     let observation = Publishers.MergeMany(observationPublishers)
-      .sink { [weak self] _ in
-        self?.notifySceneModified()
+      .sink { [] _ in
+        SceneUpdate.postGroupChanged(groupUUID: group.id)
       }
     dataBlockObservations[group.id] = observation
     
     if let parentGroupId {
       if rootGroup.appendGroup(group, toGroupWithId: parentGroupId) {
-        notifySceneModified()
+        SceneUpdate.postGroupChanged(groupUUID: group.id)
         return
       }
     }
     
     rootGroup.childGroups.append(group)
-    notifySceneModified()
+    SceneUpdate.postGroupChanged(groupUUID: group.id)
   }
   
   func addCloud(filepath: String, toGroupId: UUID? = nil) {
@@ -102,29 +101,23 @@ final class PlaygroundScene: ObservableObject {
     ]
     
     let observation = Publishers.MergeMany(observationPublishers)
-      .sink { [weak self] _ in
-        self?.notifySceneModified()
+      .sink { [] _ in
+        SceneUpdate.postObjectDataBlockChanged(objectUUID: object.id)
       }
     
     dataBlockObservations[object.id] = observation
     
     rootGroup.objects.append(object)
-    notifySceneModified()
+    SceneUpdate.postObjectChanged(objectUUID: object.id)
+    SceneUpdate.postObjectDataBlockChanged(objectUUID: object.id)
   }
   
   func removeObject(_ id: UUID) {
     if rootGroup.removeObject(withId: id) != nil {
       dataBlockObservations.removeValue(forKey: id)
       selectedIds.removeAll { $0 == id }
-      notifySceneModified()
+      SceneUpdate.postObjectChanged(objectUUID: id)
       return
-    }
-  }
-  
-  func notifySceneModified() {
-    for cb in sceneModifiedCallbacks.values { cb(self) }
-    DispatchQueue.main.async {
-      self.objectWillChange.send()
     }
   }
 }

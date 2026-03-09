@@ -8,17 +8,14 @@
 import Foundation
 
 extension PlaygroundScene {
-  func toggleVisibility(for id: UUID) {
+  func toggleVisibility(for id: UUID, _ visible: Bool? = nil) {
     if let object = rootGroup.object(withId: id) {
-      object.isVisible.toggle()
-      notifySceneModified()
-    }
-  }
-  
-  func setVisibility(_ visible: Bool, for id: UUID) {
-    if let object = rootGroup.object(withId: id) {
-      object.isVisible = visible
-      notifySceneModified()
+      if let visible {
+        object.isVisible = visible
+      } else {
+        object.isVisible.toggle()
+      }
+      SceneUpdate.postObjectChanged(objectUUID: id)
     }
   }
   
@@ -41,7 +38,7 @@ extension PlaygroundScene {
     }
     
     targetGroup.objects.append(object)
-    notifySceneModified()
+    SceneUpdate.postObjectChanged(objectUUID: id)
     return true
   }
   
@@ -59,7 +56,7 @@ extension PlaygroundScene {
       }
       
       targetGroup.childGroups.append(detachedGroup)
-      notifySceneModified()
+      SceneUpdate.postGroupChanged(groupUUID: id)
       return true
     }
     
@@ -68,7 +65,7 @@ extension PlaygroundScene {
     }
     
     rootGroup.childGroups.append(detachedGroup)
-    notifySceneModified()
+    SceneUpdate.postGroupChanged(groupUUID: id)
     return true
   }
 }
