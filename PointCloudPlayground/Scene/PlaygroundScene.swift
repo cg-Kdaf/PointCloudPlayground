@@ -76,7 +76,7 @@ final class PlaygroundScene: ObservableObject {
     let data: PointCloudDataBlock?
     
     if filepath.hasSuffix(".laz") || filepath.hasSuffix(".las") {
-      let importer = LaszipImporter()
+      let importer = LazrscImporter()
       data = importer.importFrom(filePath: filepath)
     } else {
       let importer = ColmapImporter()

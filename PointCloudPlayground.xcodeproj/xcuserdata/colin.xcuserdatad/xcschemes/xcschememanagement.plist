@@ -9,9 +9,19 @@
 			<key>orderHint</key>
 			<integer>0</integer>
 		</dict>
+		<key>laz-rs-c.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>1</integer>
+		</dict>
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
+		<key>3BE045472F5F712200224274</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
 		<key>3BE32DBD2F4B173E0087AF8E</key>
 		<dict>
 			<key>primary</key>

@@ -7,15 +7,57 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3BE0454F2F5F761B00224274 /* las.c in Sources */ = {isa = PBXBuildFile; fileRef = 3BE045262F5F70AF00224274 /* las.c */; };
+		3BE045522F5F787C00224274 /* liblaz_rs_c.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3BE045512F5F787C00224274 /* liblaz_rs_c.a */; };
+		3BE045592F5F801D00224274 /* lazrs_cpp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3BE045112F5F70AF00224274 /* lazrs_cpp.cpp */; };
+		3BE0455A2F5F850000224274 /* liblaz-rs-c.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 3BE045482F5F712200224274 /* liblaz-rs-c.a */; };
 		3BE32F0F2F4B433D0087AF8E /* liblaszip_api.8.0.6.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 3BE32F0E2F4B433D0087AF8E /* liblaszip_api.8.0.6.dylib */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		3BE0454C2F5F712A00224274 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3BE32DB62F4B173E0087AF8E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3BE045472F5F712200224274;
+			remoteInfo = "laz-rs-c";
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
+		3BE045102F5F70AF00224274 /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
+		3BE045112F5F70AF00224274 /* lazrs_cpp.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = lazrs_cpp.cpp; sourceTree = "<group>"; };
+		3BE045132F5F70AF00224274 /* c_decompressor.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = c_decompressor.c; sourceTree = "<group>"; };
+		3BE045142F5F70AF00224274 /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
+		3BE045152F5F70AF00224274 /* cpp_decompressor.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = cpp_decompressor.cpp; sourceTree = "<group>"; };
+		3BE045162F5F70AF00224274 /* cpp_pardecompressor.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = cpp_pardecompressor.cpp; sourceTree = "<group>"; };
+		3BE045182F5F70AF00224274 /* lazrs_cpp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = lazrs_cpp.h; sourceTree = "<group>"; };
+		3BE0451B2F5F70AF00224274 /* io.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = io.rs; sourceTree = "<group>"; };
+		3BE0451C2F5F70AF00224274 /* lib.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = lib.rs; sourceTree = "<group>"; };
+		3BE0451E2F5F70AF00224274 /* build.rs */ = {isa = PBXFileReference; lastKnownFileType = text; path = build.rs; sourceTree = "<group>"; };
+		3BE0451F2F5F70AF00224274 /* Cargo.toml */ = {isa = PBXFileReference; lastKnownFileType = text; path = Cargo.toml; sourceTree = "<group>"; };
+		3BE045202F5F70AF00224274 /* cbindgen.toml */ = {isa = PBXFileReference; lastKnownFileType = text; path = cbindgen.toml; sourceTree = "<group>"; };
+		3BE045212F5F70AF00224274 /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
+		3BE045232F5F70AF00224274 /* las.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = las.h; sourceTree = "<group>"; };
+		3BE045262F5F70AF00224274 /* las.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = las.c; sourceTree = "<group>"; };
+		3BE045282F5F70AF00224274 /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
+		3BE0452A2F5F70AF00224274 /* .clang-format */ = {isa = PBXFileReference; lastKnownFileType = text; path = ".clang-format"; sourceTree = "<group>"; };
+		3BE0452B2F5F70AF00224274 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
+		3BE0452C2F5F70AF00224274 /* CMakeLists.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = CMakeLists.txt; sourceTree = "<group>"; };
+		3BE0452D2F5F70AF00224274 /* CMakeSettings.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = CMakeSettings.json; sourceTree = "<group>"; };
+		3BE0452E2F5F70AF00224274 /* LICENSE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = LICENSE.md; sourceTree = "<group>"; };
+		3BE045482F5F712200224274 /* liblaz-rs-c.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "liblaz-rs-c.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		3BE045512F5F787C00224274 /* liblaz_rs_c.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = liblaz_rs_c.a; path = "laz-rs-c/lazrs/target/release/liblaz_rs_c.a"; sourceTree = "<group>"; };
 		3BE32DBE2F4B173E0087AF8E /* PointCloudPlayground.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PointCloudPlayground.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		3BE32F0E2F4B433D0087AF8E /* liblaszip_api.8.0.6.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = liblaszip_api.8.0.6.dylib; path = ../../../../opt/homebrew/lib/liblaszip_api.8.0.6.dylib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		3BE045582F5F7DA000224274 /* CustomModules */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = CustomModules;
+			sourceTree = "<group>";
+		};
 		3BE32DC02F4B173E0087AF8E /* PointCloudPlayground */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = PointCloudPlayground;
@@ -24,10 +66,19 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		3BE045462F5F712200224274 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		3BE32DBB2F4B173E0087AF8E /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				3BE045522F5F787C00224274 /* liblaz_rs_c.a in Frameworks */,
+				3BE0455A2F5F850000224274 /* liblaz-rs-c.a in Frameworks */,
 				3BE32F0F2F4B433D0087AF8E /* liblaszip_api.8.0.6.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -35,9 +86,119 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		3BE045122F5F70AF00224274 /* cpp */ = {
+			isa = PBXGroup;
+			children = (
+				3BE045102F5F70AF00224274 /* CMakeLists.txt */,
+				3BE045112F5F70AF00224274 /* lazrs_cpp.cpp */,
+			);
+			path = cpp;
+			sourceTree = "<group>";
+		};
+		3BE045172F5F70AF00224274 /* examples */ = {
+			isa = PBXGroup;
+			children = (
+				3BE045132F5F70AF00224274 /* c_decompressor.c */,
+				3BE045142F5F70AF00224274 /* CMakeLists.txt */,
+				3BE045152F5F70AF00224274 /* cpp_decompressor.cpp */,
+				3BE045162F5F70AF00224274 /* cpp_pardecompressor.cpp */,
+			);
+			path = examples;
+			sourceTree = "<group>";
+		};
+		3BE045192F5F70AF00224274 /* lazrs */ = {
+			isa = PBXGroup;
+			children = (
+				3BE045182F5F70AF00224274 /* lazrs_cpp.h */,
+			);
+			path = lazrs;
+			sourceTree = "<group>";
+		};
+		3BE0451A2F5F70AF00224274 /* include */ = {
+			isa = PBXGroup;
+			children = (
+				3BE045192F5F70AF00224274 /* lazrs */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		3BE0451D2F5F70AF00224274 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				3BE0451B2F5F70AF00224274 /* io.rs */,
+				3BE0451C2F5F70AF00224274 /* lib.rs */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		3BE045222F5F70AF00224274 /* lazrs */ = {
+			isa = PBXGroup;
+			children = (
+				3BE0451A2F5F70AF00224274 /* include */,
+				3BE0451D2F5F70AF00224274 /* src */,
+				3BE0451E2F5F70AF00224274 /* build.rs */,
+				3BE0451F2F5F70AF00224274 /* Cargo.toml */,
+				3BE045202F5F70AF00224274 /* cbindgen.toml */,
+				3BE045212F5F70AF00224274 /* CMakeLists.txt */,
+			);
+			path = lazrs;
+			sourceTree = "<group>";
+		};
+		3BE045242F5F70AF00224274 /* minilas */ = {
+			isa = PBXGroup;
+			children = (
+				3BE045232F5F70AF00224274 /* las.h */,
+			);
+			path = minilas;
+			sourceTree = "<group>";
+		};
+		3BE045252F5F70AF00224274 /* include */ = {
+			isa = PBXGroup;
+			children = (
+				3BE045242F5F70AF00224274 /* minilas */,
+			);
+			path = include;
+			sourceTree = "<group>";
+		};
+		3BE045272F5F70AF00224274 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				3BE045262F5F70AF00224274 /* las.c */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		3BE045292F5F70AF00224274 /* minilas */ = {
+			isa = PBXGroup;
+			children = (
+				3BE045252F5F70AF00224274 /* include */,
+				3BE045272F5F70AF00224274 /* src */,
+				3BE045282F5F70AF00224274 /* CMakeLists.txt */,
+			);
+			path = minilas;
+			sourceTree = "<group>";
+		};
+		3BE0452F2F5F70AF00224274 /* laz-rs-c */ = {
+			isa = PBXGroup;
+			children = (
+				3BE045122F5F70AF00224274 /* cpp */,
+				3BE045172F5F70AF00224274 /* examples */,
+				3BE045222F5F70AF00224274 /* lazrs */,
+				3BE045292F5F70AF00224274 /* minilas */,
+				3BE0452A2F5F70AF00224274 /* .clang-format */,
+				3BE0452B2F5F70AF00224274 /* .gitignore */,
+				3BE0452C2F5F70AF00224274 /* CMakeLists.txt */,
+				3BE0452D2F5F70AF00224274 /* CMakeSettings.json */,
+				3BE0452E2F5F70AF00224274 /* LICENSE.md */,
+			);
+			path = "laz-rs-c";
+			sourceTree = "<group>";
+		};
 		3BE32DB52F4B173E0087AF8E = {
 			isa = PBXGroup;
 			children = (
+				3BE045582F5F7DA000224274 /* CustomModules */,
+				3BE0452F2F5F70AF00224274 /* laz-rs-c */,
 				3BE32DC02F4B173E0087AF8E /* PointCloudPlayground */,
 				3BE32F0D2F4B433D0087AF8E /* Frameworks */,
 				3BE32DBF2F4B173E0087AF8E /* Products */,
@@ -48,6 +209,7 @@
 			isa = PBXGroup;
 			children = (
 				3BE32DBE2F4B173E0087AF8E /* PointCloudPlayground.app */,
+				3BE045482F5F712200224274 /* liblaz-rs-c.a */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -55,6 +217,7 @@
 		3BE32F0D2F4B433D0087AF8E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				3BE045512F5F787C00224274 /* liblaz_rs_c.a */,
 				3BE32F0E2F4B433D0087AF8E /* liblaszip_api.8.0.6.dylib */,
 			);
 			name = Frameworks;
@@ -62,7 +225,37 @@
 		};
 /* End PBXGroup section */
 
+/* Begin PBXHeadersBuildPhase section */
+		3BE045442F5F712200224274 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
 /* Begin PBXNativeTarget section */
+		3BE045472F5F712200224274 /* laz-rs-c */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3BE045492F5F712200224274 /* Build configuration list for PBXNativeTarget "laz-rs-c" */;
+			buildPhases = (
+				3BE0454E2F5F715C00224274 /* Run Script */,
+				3BE045442F5F712200224274 /* Headers */,
+				3BE045452F5F712200224274 /* Sources */,
+				3BE045462F5F712200224274 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "laz-rs-c";
+			packageProductDependencies = (
+			);
+			productName = "laz-rs-c";
+			productReference = 3BE045482F5F712200224274 /* liblaz-rs-c.a */;
+			productType = "com.apple.product-type.library.static";
+		};
 		3BE32DBD2F4B173E0087AF8E /* PointCloudPlayground */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 3BE32DCB2F4B173F0087AF8E /* Build configuration list for PBXNativeTarget "PointCloudPlayground" */;
@@ -74,8 +267,10 @@
 			buildRules = (
 			);
 			dependencies = (
+				3BE0454D2F5F712A00224274 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
+				3BE045582F5F7DA000224274 /* CustomModules */,
 				3BE32DC02F4B173E0087AF8E /* PointCloudPlayground */,
 			);
 			name = PointCloudPlayground;
@@ -95,6 +290,9 @@
 				LastSwiftUpdateCheck = 2620;
 				LastUpgradeCheck = 2620;
 				TargetAttributes = {
+					3BE045472F5F712200224274 = {
+						CreatedOnToolsVersion = 26.3;
+					};
 					3BE32DBD2F4B173E0087AF8E = {
 						CreatedOnToolsVersion = 26.2;
 						LastSwiftMigration = 2620;
@@ -116,6 +314,7 @@
 			projectRoot = "";
 			targets = (
 				3BE32DBD2F4B173E0087AF8E /* PointCloudPlayground */,
+				3BE045472F5F712200224274 /* laz-rs-c */,
 			);
 		};
 /* End PBXProject section */
@@ -130,7 +329,38 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		3BE0454E2F5F715C00224274 /* Run Script */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 12;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Run Script";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(SRCROOT)/laz-rs-c/lazrs/target/release/liblaz_rs_c.a",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "# Load the Rust environment so Xcode can find 'cargo'\nsource \"$HOME/.cargo/env\"\n\n# Go into the Rust directory of your submodule\ncd \"${SRCROOT}/laz-rs-c/lazrs\"\n\n# Build the Rust static library\ncargo build --release\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
+		3BE045452F5F712200224274 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3BE0454F2F5F761B00224274 /* las.c in Sources */,
+				3BE045592F5F801D00224274 /* lazrs_cpp.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		3BE32DBA2F4B173E0087AF8E /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -140,7 +370,47 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		3BE0454D2F5F712A00224274 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3BE045472F5F712200224274 /* laz-rs-c */;
+			targetProxy = 3BE0454C2F5F712A00224274 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		3BE0454A2F5F712200224274 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 86X9WKP5UU;
+				EXECUTABLE_PREFIX = lib;
+				HEADER_SEARCH_PATHS = (
+					/opt/homebrew/include/laszip/,
+					"\"$(SRCROOT)/laz-rs-c/minilas/include\"",
+				);
+				INCLUDED_RECURSIVE_SEARCH_PATH_SUBDIRECTORIES = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		3BE0454B2F5F712200224274 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 86X9WKP5UU;
+				EXECUTABLE_PREFIX = lib;
+				HEADER_SEARCH_PATHS = (
+					/opt/homebrew/include/laszip/,
+					"\"$(SRCROOT)/laz-rs-c/minilas/include\"",
+				);
+				INCLUDED_RECURSIVE_SEARCH_PATH_SUBDIRECTORIES = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
 		3BE32DC92F4B173F0087AF8E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -179,7 +449,7 @@
 				DEVELOPMENT_TEAM = 86X9WKP5UU;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -194,23 +464,37 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = /opt/homebrew/include/laszip/;
-				LIBRARY_SEARCH_PATHS = /opt/homebrew/lib;
+				HEADER_SEARCH_PATHS = (
+					/opt/homebrew/include/laszip/,
+					"$(SRCROOT)/laz-rs-c/minilas/include",
+					"$(SRCROOT)/laz-rs-c/lazrs/include",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					/opt/homebrew/lib,
+					"$(SRCROOT)/laz-rs-c/lazrs/target/release",
+				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MODULEMAP_FILE = "";
+				MODULEMAP_PRIVATE_FILE = "";
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
-				OTHER_LDFLAGS = "-llaszip";
+				OTHER_LDFLAGS = (
+					"-llaszip",
+				);
 				OTHER_SWIFT_FLAGS = "";
 				SDKROOT = macosx;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
-				SWIFT_INCLUDE_PATHS = "$(PROJECT_DIR)/PointCloudPlayground/IO";
+				SWIFT_INCLUDE_PATHS = "$(PROJECT_DIR)/PointCloudPlayground/IO $(PROJECT_DIR)/PointCloudPlayground/laz-rs-c/minilas/include $(SRCROOT)/CustomModules";
 				SWIFT_OBJC_INTEROP_MODE = objcxx;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_SYSTEM_INCLUDE_PATHS = "$(PROJECT_DIR)/IO";
-				SYSTEM_HEADER_SEARCH_PATHS = "";
-				USER_HEADER_SEARCH_PATHS = "";
+				SYSTEM_HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/laz-rs-c/minilas/include",
+					"$(SRCROOT)/laz-rs-c/lazrs/include",
+				);
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/laz-rs-c/minilas/include";
 			};
 			name = Debug;
 		};
@@ -252,7 +536,7 @@
 				DEVELOPMENT_TEAM = 86X9WKP5UU;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -261,21 +545,35 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = /opt/homebrew/include/laszip/;
-				LIBRARY_SEARCH_PATHS = /opt/homebrew/lib;
+				HEADER_SEARCH_PATHS = (
+					/opt/homebrew/include/laszip/,
+					"$(SRCROOT)/laz-rs-c/minilas/include",
+					"$(SRCROOT)/laz-rs-c/lazrs/include",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					/opt/homebrew/lib,
+					"$(SRCROOT)/laz-rs-c/lazrs/target/release",
+				);
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MACOSX_DEPLOYMENT_TARGET = 26.2;
+				MODULEMAP_FILE = "";
+				MODULEMAP_PRIVATE_FILE = "";
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
-				OTHER_LDFLAGS = "-llaszip";
+				OTHER_LDFLAGS = (
+					"-llaszip",
+				);
 				OTHER_SWIFT_FLAGS = "";
 				SDKROOT = macosx;
 				SWIFT_COMPILATION_MODE = wholemodule;
-				SWIFT_INCLUDE_PATHS = "$(PROJECT_DIR)/PointCloudPlayground/IO";
+				SWIFT_INCLUDE_PATHS = "$(PROJECT_DIR)/PointCloudPlayground/IO $(PROJECT_DIR)/PointCloudPlayground/laz-rs-c/minilas/include $(SRCROOT)/CustomModules";
 				SWIFT_OBJC_INTEROP_MODE = objcxx;
 				SWIFT_SYSTEM_INCLUDE_PATHS = "$(PROJECT_DIR)/IO";
-				SYSTEM_HEADER_SEARCH_PATHS = "";
-				USER_HEADER_SEARCH_PATHS = "";
+				SYSTEM_HEADER_SEARCH_PATHS = (
+					"$(SRCROOT)/laz-rs-c/minilas/include",
+					"$(SRCROOT)/laz-rs-c/lazrs/include",
+				);
+				USER_HEADER_SEARCH_PATHS = "$(SRCROOT)/laz-rs-c/minilas/include";
 			};
 			name = Release;
 		};
@@ -298,6 +596,10 @@
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/laz-rs-c/lazrs/target/release",
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = Colin.PointCloudPlayground;
@@ -334,6 +636,10 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)/laz-rs-c/lazrs/target/release",
+				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = Colin.PointCloudPlayground;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -351,6 +657,15 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		3BE045492F5F712200224274 /* Build configuration list for PBXNativeTarget "laz-rs-c" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				3BE0454A2F5F712200224274 /* Debug */,
+				3BE0454B2F5F712200224274 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		3BE32DB92F4B173E0087AF8E /* Build configuration list for PBXProject "PointCloudPlayground" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

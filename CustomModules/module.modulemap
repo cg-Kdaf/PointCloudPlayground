@@ -1,0 +1,9 @@
+
+module Lazrsc [system] {
+  header "../laz-rs-c/minilas/include/minilas/las.h"
+  header "../laz-rs-c/lazrs/include/lazrs/lazrs_cpp.h"
+  export *
+  requires cplusplus
+  
+  link "laz_rs_c"
+}

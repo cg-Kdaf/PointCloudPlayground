@@ -1,0 +1,3 @@
+[submodule "laz-rs-c"]
+	path = laz-rs-c
+	url = https://github.com/laz-rs/laz-rs-c.git

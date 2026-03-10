@@ -59,9 +59,6 @@ final class LaszipImporter {
         let z = Float(Double(p.Z) * header.z_scale_factor + header.z_offset - center.z)
         let position = SIMD4<Float>(x, y, z, 0.0)
         points.append(PointVertex(position: position))
-        if point_id > 7000000 {
-          throw LAZImportError.message("Stop here")
-        }
         point_id += 1
       })
       
