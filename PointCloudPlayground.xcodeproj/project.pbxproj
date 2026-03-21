@@ -347,7 +347,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Load the Rust environment so Xcode can find 'cargo'\nsource \"$HOME/.cargo/env\"\n\n# Go into the Rust directory of your submodule\ncd \"${SRCROOT}/laz-rs-c/lazrs\"\n\n# Build the Rust static library\ncargo build --release\n";
+			shellScript = "# Load the Rust environment so Xcode can find 'cargo'\nsource \"$HOME/.cargo/env\"\n\n# Go into the Rust directory of your submodule\ncd \"${SRCROOT}/laz-rs-c/lazrs\"\n\n# Build the Rust static library\ncargo build --release --features parallel\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

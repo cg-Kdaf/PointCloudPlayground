@@ -25,6 +25,8 @@ final class LaszipImporter {
   private var isReaderOpen = false
   
   func importFrom(filePath: String) -> PointCloudDataBlock? {
+    // Measure time
+    let clockStartBegining = ContinuousClock().now
     do {
       var pointer: laszip_POINTER?
       guard laszip_create(&pointer) == 0, pointer != nil else {
@@ -63,6 +65,8 @@ final class LaszipImporter {
       })
       
       cleanup()
+      let totaltime_result = clockStartBegining.duration(to: .now)
+      print("The import in swift structure took \(totaltime_result), or the equivalent of \(Double(pointsCount) / Double(totaltime_result.attoseconds) * 1e12) milion points per second.")
       return PointCloudDataBlock(points: points, pointsCount: pointsCount, center: center, boundingBox: boundingBox, filePath: filePath)
     } catch {
       print("Import failed: \(error.localizedDescription)")
