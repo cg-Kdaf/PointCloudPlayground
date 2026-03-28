@@ -46,7 +46,8 @@ final class PlaygroundScene: ObservableObject {
   
   private var dataBlockObservations: [UUID: AnyCancellable] = [:]
   
-  func addGroup(named name: String = "New Group", parentGroupId: UUID? = nil) {
+  @discardableResult
+  func addGroup(named name: String = "New Group", parentGroupId: UUID? = nil) -> UUID {
     let group = SceneGroup(name: name)
     
     let observationPublishers: [AnyPublisher<Void, Never>] = [
@@ -64,15 +65,17 @@ final class PlaygroundScene: ObservableObject {
     if let parentGroupId {
       if rootGroup.appendGroup(group, toGroupWithId: parentGroupId) {
         SceneUpdate.postGroupChanged(groupUUID: group.id)
-        return
+        return group.id
       }
     }
-    
+
     rootGroup.childGroups.append(group)
     SceneUpdate.postGroupChanged(groupUUID: group.id)
+    return group.id
   }
   
-  func addCloud(filepath: String, toGroupId: UUID? = nil) {
+  func addCloud(filepath: String, toGroupId: UUID? = nil) -> SceneObject? {
+    print("Adding cloud from filepath", filepath)
     let data: PointCloudDataBlock?
     
     if filepath.hasSuffix(".laz") || filepath.hasSuffix(".las") {
@@ -84,7 +87,7 @@ final class PlaygroundScene: ObservableObject {
     }
     
     guard let data else {
-      return
+      return nil
     }
     
     let name = URL(fileURLWithPath: filepath).lastPathComponent
@@ -106,10 +109,19 @@ final class PlaygroundScene: ObservableObject {
       }
     
     dataBlockObservations[object.id] = observation
-    
+
+    if let targetId = toGroupId {
+      if rootGroup.appendObject(object, toGroupWithId: targetId) {
+        SceneUpdate.postObjectChanged(objectUUID: object.id)
+        SceneUpdate.postObjectDataBlockChanged(objectUUID: object.id)
+        return object
+      }
+    }
+
     rootGroup.objects.append(object)
     SceneUpdate.postObjectChanged(objectUUID: object.id)
     SceneUpdate.postObjectDataBlockChanged(objectUUID: object.id)
+    return object
   }
   
   func removeObject(_ id: UUID) {

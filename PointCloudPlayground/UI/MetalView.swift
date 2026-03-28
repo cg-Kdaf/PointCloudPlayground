@@ -126,7 +126,28 @@ final class OrbitMTKView: MTKView {
       updateStatusLabel()
       return
     }
-    super.rightMouseDown(with: event)
+    previousLocation = convert(event.locationInWindow, from: nil)
+  }
+
+  override func rightMouseDragged(with event: NSEvent) {
+    if let tc = transformController, tc.isActive {
+      return
+    }
+    let currentLocation = convert(event.locationInWindow, from: nil)
+    if let previousLocation {
+      let deltaX = Float(previousLocation.x - currentLocation.x)
+      let deltaY = Float(previousLocation.y - currentLocation.y)
+      onPan?(deltaX, deltaY)
+    }
+    previousLocation = currentLocation
+  }
+
+  override func rightMouseUp(with event: NSEvent) {
+    if let tc = transformController, tc.isActive {
+      return
+    }
+    onMouseUp?()
+    previousLocation = nil
   }
 
   override func keyDown(with event: NSEvent) {
@@ -160,13 +181,8 @@ final class OrbitMTKView: MTKView {
     if let tc = transformController, tc.isActive {
       return // Don't scroll while transforming
     }
-    let deltaX = Float(event.scrollingDeltaX)
     let deltaY = Float(event.scrollingDeltaY)
-    if event.modifierFlags.contains(.shift) {
-      onPan?(-deltaX, deltaY)
-    } else {
-      onScroll?(-deltaY)
-    }
+    onScroll?(-deltaY)
     
     // Reset timer to detect when scrolling stops
     scrollTimer?.invalidate()

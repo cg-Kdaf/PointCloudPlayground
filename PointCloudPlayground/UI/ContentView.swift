@@ -52,6 +52,12 @@ struct ContentView: View {
                           allowedContentTypes: [.folder],
                           allowsMultipleSelection: false,
                           onCompletion: handleImportResult)
+
+            Button(action: { StartupImporter.run(scene: scene) }) {
+              Label("Startup Import", systemImage: "play.circle")
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
           }
           .padding(.horizontal, 12)
           .padding(.bottom, 12)
