@@ -5,6 +5,7 @@ import simd
 
 final class PointCloudRenderer: RenderPass {
   private struct RenderCloud {
+    let id: UUID
     let pointCount: Int
     let buffer: MTLBuffer
     let uniformsBuffer: MTLBuffer
@@ -88,7 +89,7 @@ final class PointCloudRenderer: RenderPass {
                                                      options: .storageModeShared) else {
           return nil
         }
-        return RenderCloud(pointCount: points.count, buffer: buffer, uniformsBuffer: uniformsBuffer)
+        return RenderCloud(id: sceneObject.id, pointCount: points.count, buffer: buffer, uniformsBuffer: uniformsBuffer)
       }
     }
   }
@@ -100,15 +101,11 @@ final class PointCloudRenderer: RenderPass {
     
     // Update model matrix per cloud each frame (transforms may change)
     // Calculate hierarchical transformation: parent groups multiplied by object transform
-    var cloudIndex = 0
-    for sceneObject in scene.allVisibleObjects {
-      guard sceneObject.asPointCloudData != nil, cloudIndex < renderClouds.count else {
-        continue
-      }
+    for renderCloud in renderClouds {
+      guard let sceneObject = scene.rootGroup.object(withId: renderCloud.id), sceneObject.isVisible else { continue }
       var hierarchicalMatrix = scene.rootGroup.hierarchicalMatrix(forItemId: sceneObject.id, in: scene.rootGroup)
-      renderClouds[cloudIndex].uniformsBuffer.contents()
+      renderCloud.uniformsBuffer.contents()
         .copyMemory(from: &hierarchicalMatrix, byteCount: MemoryLayout<simd_float4x4>.stride)
-      cloudIndex += 1
     }
     
     encoder.setViewport(frame.viewport)
@@ -117,6 +114,7 @@ final class PointCloudRenderer: RenderPass {
     encoder.setVertexBuffer(frame.cameraBuffer, offset: 0, index: 1)
     
     for renderCloud in renderClouds {
+      guard let sceneObject = scene.rootGroup.object(withId: renderCloud.id), sceneObject.isVisible else { continue }
       encoder.setVertexBuffer(renderCloud.buffer, offset: 0, index: 0)
       encoder.setVertexBuffer(renderCloud.uniformsBuffer, offset: 0, index: 2)
       encoder.drawPrimitives(type: .point, vertexStart: 0, vertexCount: renderCloud.pointCount)

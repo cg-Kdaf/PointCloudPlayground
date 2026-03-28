@@ -57,6 +57,7 @@ final class PlaygroundScene: ObservableObject {
     ]
     
     let observation = Publishers.MergeMany(observationPublishers)
+      .receive(on: DispatchQueue.main)
       .sink { [] _ in
         SceneUpdate.postGroupChanged(groupUUID: group.id)
       }
@@ -104,6 +105,7 @@ final class PlaygroundScene: ObservableObject {
     ]
     
     let observation = Publishers.MergeMany(observationPublishers)
+      .receive(on: DispatchQueue.main)
       .sink { [] _ in
         SceneUpdate.postObjectDataBlockChanged(objectUUID: object.id)
       }
@@ -156,7 +158,9 @@ final class PlaygroundScene: ObservableObject {
         cloudObject.$scale.map { _ in () }.eraseToAnyPublisher()
       ]
       
-      dataBlockObservations[cloudObject.id] = Publishers.MergeMany(cloudObservationPublishers).sink { _ in
+      dataBlockObservations[cloudObject.id] = Publishers.MergeMany(cloudObservationPublishers)
+        .receive(on: DispatchQueue.main)
+        .sink { _ in
         SceneUpdate.postObjectDataBlockChanged(objectUUID: cloudObject.id)
       }
       
@@ -200,15 +204,14 @@ final class PlaygroundScene: ObservableObject {
         cameraObject.$scale.map { _ in () }.eraseToAnyPublisher()
       ]
       
-      dataBlockObservations[cameraObject.id] = Publishers.MergeMany(camObservationPublishers).sink { _ in
-//        SceneUpdate.postObjectDataBlockChanged(objectUUID: cameraObject.id)
+      dataBlockObservations[cameraObject.id] = Publishers.MergeMany(camObservationPublishers)
+        .receive(on: DispatchQueue.main)
+        .sink { _ in
+       SceneUpdate.postObjectDataBlockChanged(objectUUID: cameraObject.id)
       }
       
-      if rootGroup.appendObject(cameraObject, toGroupWithId: camerasGroupId) {
-//        SceneUpdate.postObjectChanged(objectUUID: cameraObject.id)
-      } else {
+      if !rootGroup.appendObject(cameraObject, toGroupWithId: camerasGroupId) {
         rootGroup.objects.append(cameraObject)
-//        SceneUpdate.postObjectChanged(objectUUID: cameraObject.id)
       }
     }
   }
