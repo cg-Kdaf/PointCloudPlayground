@@ -91,7 +91,11 @@ struct ContentView: View {
     let path = url.path
     
     // Add to scene
-    scene.addCloud(filepath: path)
+    if path.hasSuffix(".laz") || path.hasSuffix(".las") {
+      scene.addCloud(filepath: path)
+    } else {
+      scene.addColmapScene(fromDirectory: path)
+    }
   }
 }
 

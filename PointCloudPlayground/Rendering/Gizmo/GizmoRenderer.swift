@@ -13,6 +13,8 @@ final class GizmoRenderer {
   private let axisVertexCount: Int
   private var bboxVertexBuffer: MTLBuffer?
   private var bboxVertexCount: Int = 0
+  private var cameraVertexBuffer: MTLBuffer?
+  private var cameraVertexCount: Int = 0
   private let scene: PlaygroundScene
   
   init?(device: MTLDevice,
@@ -98,9 +100,47 @@ final class GizmoRenderer {
       encoder.setVertexBuffer(bboxBuffer, offset: 0, index: 0)
       encoder.drawPrimitives(type: .line, vertexStart: 0, vertexCount: bboxVertexCount)
     }
+
+    // Draw camera gizmos
+    if let camBuffer = cameraVertexBuffer, cameraVertexCount > 0 {
+      encoder.setVertexBuffer(camBuffer, offset: 0, index: 0)
+      encoder.drawPrimitives(type: .line, vertexStart: 0, vertexCount: cameraVertexCount)
+    }
   }
   
   @objc private func updateBoundingBox(_ n: Notification) {
+    updateInternalBoundingBox()
+    updateCameras()
+  }
+
+  private func updateCameras() {
+    var allCameraVertices: [GizmoVertex] = []
+    
+    let visibleCameras = scene.allVisibleObjects.filter { $0.dataBlockType == .camera }
+    for camera in visibleCameras {
+      let isSelected = scene.selectedObject?.id == camera.id
+      var matrix = scene.rootGroup.hierarchicalMatrix(forItemId: camera.id, in: scene.rootGroup)
+      
+      if let camData = camera.asCameraData {
+        let q = simd_quatf(vector: camData.orientation)
+        matrix = matrix * simd_float4x4(q)
+      }
+      
+      let camVertices = Self.makeCameraVertices(modelMatrix: matrix, isSelected: isSelected)
+      allCameraVertices.append(contentsOf: camVertices)
+    }
+    
+    cameraVertexCount = allCameraVertices.count
+    if cameraVertexCount > 0 {
+      cameraVertexBuffer = device.makeBuffer(bytes: allCameraVertices,
+                                             length: MemoryLayout<GizmoVertex>.stride * allCameraVertices.count,
+                                             options: .storageModeShared)
+    } else {
+      cameraVertexBuffer = nil
+    }
+  }
+
+  private func updateInternalBoundingBox() {
     var bboxMatrix: simd_float4x4?
     var bbox: BoundingBox?
     
@@ -131,6 +171,38 @@ final class GizmoRenderer {
                                          options: .storageModeShared)
   }
   
+  private static func makeCameraVertices(modelMatrix: simd_float4x4, isSelected: Bool) -> [GizmoVertex] {
+    let color: SIMD3<Float> = isSelected ? SIMD3<Float>(1, 0.8, 0) : SIMD3<Float>(0.2, 0.6, 1.0)
+    
+    // In Colmap, local camera +Z points forward, Y points down, X points right
+    let z: Float = 1.0
+    let x: Float = 0.5
+    let y: Float = 0.35
+    
+    let localPoints: [SIMD3<Float>] = [
+      .zero,
+      SIMD3<Float>(-x, -y, z), // Top Left
+      SIMD3<Float>( x, -y, z), // Top Right
+      SIMD3<Float>( x,  y, z), // Bottom Right
+      SIMD3<Float>(-x,  y, z)  // Bottom Left
+    ]
+    
+    let worldPoints = localPoints.map {
+      let w = modelMatrix * SIMD4<Float>($0, 1.0)
+      return SIMD3<Float>(w.x, w.y, w.z)
+    }
+    
+    let lineIndices: [(Int, Int)] = [
+      (0, 1), (0, 2), (0, 3), (0, 4), // Pyramid lines
+      (1, 2), (2, 3), (3, 4), (4, 1)  // Base rectangle lines
+    ]
+    
+    return lineIndices.flatMap { (a, b) in
+      [GizmoVertex(position: worldPoints[a], color: color),
+       GizmoVertex(position: worldPoints[b], color: color)]
+    }
+  }
+
   private static func makeVertexDescriptor() -> MTLVertexDescriptor {
     let descriptor = MTLVertexDescriptor()
     descriptor.attributes[0].format = .float3

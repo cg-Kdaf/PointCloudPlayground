@@ -132,4 +132,84 @@ final class PlaygroundScene: ObservableObject {
       return
     }
   }
+
+  func addColmapScene(fromDirectory path: String, toGroupId: UUID? = nil) {
+    let groupName = URL(fileURLWithPath: path).lastPathComponent
+    let colmapGroupId = addGroup(named: groupName, parentGroupId: toGroupId)
+
+    let importer = ColmapImporter()
+    
+    // 1. Add Point Cloud (Features)
+    var cloudCenter = SIMD3<Float>.zero
+    if let cloudData = importer.importPointCloud(fromDirectory: path) {
+      cloudCenter = SIMD3<Float>(Float(cloudData.center.x), Float(cloudData.center.y), Float(cloudData.center.z))
+      
+      let cloudObject = SceneObject(name: "Features", dataBlock: cloudData, type: .pointCloud)
+      
+      let cloudObservationPublishers: [AnyPublisher<Void, Never>] = [
+        cloudData.$color.map { _ in () }.eraseToAnyPublisher(),
+        cloudData.$pointSize.map { _ in () }.eraseToAnyPublisher(),
+        cloudObject.$name.map { _ in () }.eraseToAnyPublisher(),
+        cloudObject.$isVisible.map { _ in () }.eraseToAnyPublisher(),
+        cloudObject.$translation.map { _ in () }.eraseToAnyPublisher(),
+        cloudObject.$rotation.map { _ in () }.eraseToAnyPublisher(),
+        cloudObject.$scale.map { _ in () }.eraseToAnyPublisher()
+      ]
+      
+      dataBlockObservations[cloudObject.id] = Publishers.MergeMany(cloudObservationPublishers).sink { _ in
+        SceneUpdate.postObjectDataBlockChanged(objectUUID: cloudObject.id)
+      }
+      
+      if rootGroup.appendObject(cloudObject, toGroupWithId: colmapGroupId) {
+        SceneUpdate.postObjectChanged(objectUUID: cloudObject.id)
+      } else {
+        rootGroup.objects.append(cloudObject)
+        SceneUpdate.postObjectChanged(objectUUID: cloudObject.id)
+      }
+    }
+    
+    // 2. Add Cameras as a New Object Type
+    let camerasGroupId = addGroup(named: "Cameras", parentGroupId: colmapGroupId)
+    let poses = importer.parseImages(fromDirectory: path)
+    
+    for pose in poses {
+      // Colmap poses represent World-to-Camera transformations
+      let q = simd_quatf(ix: Float(pose.qx), iy: Float(pose.qy), iz: Float(pose.qz), r: Float(pose.qw))
+      let t = SIMD3<Float>(Float(pose.tx), Float(pose.ty), Float(pose.tz))
+      
+      // Calculate Camera-to-World
+      let qInv = q.inverse
+      let cWorld = qInv.act(-t)
+      
+      // Translate to the centered coordinates used by the point cloud
+      let finalPosition = cWorld - cloudCenter
+      let orientation = SIMD4<Float>(qInv.vector.x, qInv.vector.y, qInv.vector.z, qInv.vector.w)
+      
+      let cameraData = CameraDataBlock(position: finalPosition, orientation: orientation)
+      let cameraObject = SceneObject(name: pose.imageName, dataBlock: cameraData, type: .camera)
+      cameraObject.translation = finalPosition // Bind object's translation to its position
+      
+      let camObservationPublishers: [AnyPublisher<Void, Never>] = [
+        cameraData.$position.map { _ in () }.eraseToAnyPublisher(),
+        cameraData.$orientation.map { _ in () }.eraseToAnyPublisher(),
+        cameraData.$fov.map { _ in () }.eraseToAnyPublisher(),
+        cameraObject.$name.map { _ in () }.eraseToAnyPublisher(),
+        cameraObject.$isVisible.map { _ in () }.eraseToAnyPublisher(),
+        cameraObject.$translation.map { _ in () }.eraseToAnyPublisher(),
+        cameraObject.$rotation.map { _ in () }.eraseToAnyPublisher(),
+        cameraObject.$scale.map { _ in () }.eraseToAnyPublisher()
+      ]
+      
+      dataBlockObservations[cameraObject.id] = Publishers.MergeMany(camObservationPublishers).sink { _ in
+//        SceneUpdate.postObjectDataBlockChanged(objectUUID: cameraObject.id)
+      }
+      
+      if rootGroup.appendObject(cameraObject, toGroupWithId: camerasGroupId) {
+//        SceneUpdate.postObjectChanged(objectUUID: cameraObject.id)
+      } else {
+        rootGroup.objects.append(cameraObject)
+//        SceneUpdate.postObjectChanged(objectUUID: cameraObject.id)
+      }
+    }
+  }
 }
