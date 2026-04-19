@@ -13,6 +13,7 @@ struct SceneGroupRowView: View {
   @ObservedObject var group: SceneGroup
   var depth: Int = 0
   var flattenHeadLess: Bool = false
+  @Binding var cameraIdBinding: UUID?
   @State private var isExpanded = true
   @State private var isHovered = false
   @State private var isDropTargeted = false
@@ -69,7 +70,7 @@ struct SceneGroupRowView: View {
       if isExpanded || flattenHeadLess {
         VStack(alignment: .leading, spacing: 4) {
           ForEach(group.childGroups) { childGroup in
-            SceneGroupRowView(scene: scene, group: childGroup, depth: depth + 1)
+            SceneGroupRowView(scene: scene, group: childGroup, depth: depth + 1, cameraIdBinding: $cameraIdBinding)
           }
           
           ForEach(group.objects) { object in
@@ -78,6 +79,7 @@ struct SceneGroupRowView: View {
               object: object,
               depth: depth + 1,
               isSelected: scene.isSelected(id: object.id),
+              cameraIdBinding: $cameraIdBinding,
               onSelect: { append in
                 if append {
                   scene.toggleSelection(id: object.id)
@@ -113,10 +115,12 @@ struct SceneGroupRowView: View {
 }
 
 struct SceneNodeRowView: View {
+  @Environment(\.openWindow) private var openWindow
   @ObservedObject var scene: PlaygroundScene
   @ObservedObject var object: SceneObject
   var depth: Int = 0
   let isSelected: Bool
+  @Binding var cameraIdBinding: UUID?
   let onSelect: (Bool) -> Void
   let onToggleVisibility: () -> Void
   @State private var isHovered = false
@@ -153,6 +157,19 @@ struct SceneNodeRowView: View {
         .foregroundColor(isSelected ? .blue : .primary)
       
       Spacer()
+      
+      if object.dataBlockType == .camera {
+        Button(action: {
+          openWindow(id: "camera")
+          cameraIdBinding = object.id
+        }) {
+          Image(systemName: "camera.viewfinder")
+            .font(.system(size: 13))
+            .foregroundColor(.secondary)
+        }
+        .buttonStyle(.plain)
+        .opacity(isHovered ? 1.0 : 0.65)
+      }
     }
     .onHover { hovering in isHovered = hovering }
   }

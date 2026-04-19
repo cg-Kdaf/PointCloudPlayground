@@ -189,7 +189,12 @@ final class PlaygroundScene: ObservableObject {
       let finalPosition = cWorld - cloudCenter
       let orientation = SIMD4<Float>(qInv.vector.x, qInv.vector.y, qInv.vector.z, qInv.vector.w)
       
-      let cameraData = CameraDataBlock(position: finalPosition, orientation: orientation)
+      let baseDirUrl = URL(fileURLWithPath: path).deletingLastPathComponent().deletingLastPathComponent()
+      let imgPath1 = baseDirUrl.appendingPathComponent("images").appendingPathComponent(pose.imageName).path
+      let imgPath2 = baseDirUrl.appendingPathComponent("aiguille_midi_images").appendingPathComponent(pose.imageName).path
+      let imgPath = FileManager.default.fileExists(atPath: imgPath1) ? imgPath1 : (FileManager.default.fileExists(atPath: imgPath2) ? imgPath2 : nil)
+      
+      let cameraData = CameraDataBlock(position: finalPosition, orientation: orientation, imagePath: imgPath)
       let cameraObject = SceneObject(name: pose.imageName, dataBlock: cameraData, type: .camera)
       cameraObject.translation = finalPosition // Bind object's translation to its position
       
@@ -204,11 +209,11 @@ final class PlaygroundScene: ObservableObject {
         cameraObject.$scale.map { _ in () }.eraseToAnyPublisher()
       ]
       
-      dataBlockObservations[cameraObject.id] = Publishers.MergeMany(camObservationPublishers)
-        .receive(on: DispatchQueue.main)
-        .sink { _ in
-       SceneUpdate.postObjectDataBlockChanged(objectUUID: cameraObject.id)
-      }
+//      dataBlockObservations[cameraObject.id] = Publishers.MergeMany(camObservationPublishers)
+//        .receive(on: DispatchQueue.main)
+//        .sink { _ in
+//       SceneUpdate.postObjectDataBlockChanged(objectUUID: cameraObject.id)
+//      }
       
       if !rootGroup.appendObject(cameraObject, toGroupWithId: camerasGroupId) {
         rootGroup.objects.append(cameraObject)

@@ -6,6 +6,7 @@ import simd
 struct MetalView: NSViewRepresentable {
   let scene: PlaygroundScene
   @Binding var transformReferenceMode: TransformReferenceMode
+  var fixedCameraId: UUID? = nil
   
   func makeNSView(context: Context) -> OrbitMTKView {
     let mtkView = OrbitMTKView(frame: .zero)
@@ -30,6 +31,7 @@ struct MetalView: NSViewRepresentable {
     mtkView.onScroll = { [weak renderer] delta in
       renderer?.zoom(delta: delta)
     }
+    renderer.fixedCameraId = fixedCameraId
     mtkView.transformController = renderer.transformController
     context.coordinator.renderer = renderer
     return mtkView
@@ -37,6 +39,7 @@ struct MetalView: NSViewRepresentable {
   
   func updateNSView(_ nsView: OrbitMTKView, context: Context) {
     nsView.transformController?.referenceMode = transformReferenceMode
+    context.coordinator.renderer?.fixedCameraId = fixedCameraId
   }
   
   func makeCoordinator() -> Coordinator {
@@ -198,3 +201,44 @@ final class OrbitMTKView: MTKView {
     statusLabel?.isHidden = text.isEmpty
   }
 }
+
+struct CameraOverlayView: View {
+  @ObservedObject var scene: PlaygroundScene
+  let cameraId: UUID?
+  var imageAspectRatio: CGFloat = 1.0
+  @State private var transformReferenceMode: TransformReferenceMode = .objectCenter
+  @State private var overlayOpacity: Double = 0.5
+  
+  var body: some View {
+    ZStack {
+      MetalView(scene: scene, transformReferenceMode: $transformReferenceMode, fixedCameraId: cameraId)
+      
+      if let obj = scene.rootGroup.object(withId: cameraId!),
+         let camData = obj.asCameraData,
+         let imagePath = camData.imagePath,
+         let nsImage = NSImage(contentsOfFile: imagePath) {
+        Image(nsImage: nsImage)
+          .resizable()
+          .aspectRatio(contentMode: .fit)
+          .opacity(overlayOpacity)
+          .allowsHitTesting(false)
+      }
+      
+      VStack {
+        Spacer()
+        HStack {
+          Text("Overlay Opacity")
+            .foregroundColor(.white)
+            .shadow(color: .black, radius: 2)
+          Slider(value: $overlayOpacity, in: 0...1)
+            .frame(width: 150)
+        }
+        .padding()
+        .background(Color.black.opacity(0.5))
+        .cornerRadius(8)
+        .padding()
+      }
+    }
+  }
+}
+

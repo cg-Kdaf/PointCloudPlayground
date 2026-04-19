@@ -10,6 +10,7 @@ import UniformTypeIdentifiers
 
 struct SceneOutlinerView: View {
   @ObservedObject var scene: PlaygroundScene
+  @Binding var cameraIdBinding: UUID?
   @State private var isRootDropTargeted = false
   
   var body: some View {
@@ -46,7 +47,7 @@ struct SceneOutlinerView: View {
       
       ScrollView {
         LazyVStack(alignment: .leading, spacing: 4) {
-          SceneGroupRowView(scene: scene, group: scene.rootGroup, depth: -1, flattenHeadLess: true)
+          SceneGroupRowView(scene: scene, group: scene.rootGroup, depth: -1, flattenHeadLess: true, cameraIdBinding: $cameraIdBinding)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
@@ -79,7 +80,7 @@ struct SceneOutlinerView: View {
   }
 }
 
-#Preview {
-  let scene = PlaygroundScene()
-  SceneOutlinerView(scene: scene)
-}
+//#Preview {
+//  let scene = PlaygroundScene()
+//  SceneOutlinerView(scene: scene, cameraIdBinding: nil)
+//}

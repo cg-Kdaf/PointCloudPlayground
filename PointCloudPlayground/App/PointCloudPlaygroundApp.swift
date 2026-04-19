@@ -22,11 +22,25 @@ struct PointCloudPlaygroundApp: App {
 //      fatalError("Could not create ModelContainer: \(error)")
 //    }
 //  }()
-//  
+//
+  @StateObject private var scene = PlaygroundScene()
+  @State private var cameraId: UUID?
+  
   var body: some Scene {
     WindowGroup {
-      ContentView()
+      ContentView(scene: scene, cameraIdBinding: $cameraId)
     }
 //    .modelContainer(sharedModelContainer)
+
+    Window("Camera details", id: "camera") {
+      if let cameraId = cameraId {
+        CameraOverlayView(scene: scene, cameraId: cameraId)
+      } else {
+        Text("No camera selected")
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
+          .background(Color(nsColor: .controlBackgroundColor))
+      }
+    }
+    .keyboardShortcut("1")
   }
 }

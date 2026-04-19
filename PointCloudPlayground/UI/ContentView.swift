@@ -12,8 +12,9 @@ import AppKit
 import simd
 
 struct ContentView: View {
+  @ObservedObject var scene: PlaygroundScene
+  @Binding var cameraIdBinding: UUID?
   @State private var selectedPath: String?
-  @StateObject private var scene = PlaygroundScene()
   @State private var isLazImporterPresented = false
   @State private var isColmapFolderPresented = false
   @State private var transformReferenceMode: TransformReferenceMode = .objectCenter
@@ -71,7 +72,7 @@ struct ContentView: View {
         Divider()
         
         // Main outliner
-        SceneOutlinerView(scene: scene)
+        SceneOutlinerView(scene: scene, cameraIdBinding: $cameraIdBinding)
       }
       .frame(width: 320)
       .background(Color(nsColor: .controlBackgroundColor))
@@ -98,7 +99,8 @@ struct ContentView: View {
     }
   }
 }
-
-#Preview {
-  ContentView()
-}
+//
+//#Preview {
+//  @Previewable @StateObject var scene = PlaygroundScene()
+//  ContentView(scene: scene)
+//}

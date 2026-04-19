@@ -10,6 +10,7 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
   private let cameraBuffer: MTLBuffer
   private let orbitCamera: OrbitCamera
   private let scene: PlaygroundScene
+  var fixedCameraId: UUID?
   let transformController: TransformController
   
   init?(mtkView: MTKView, scene: PlaygroundScene) {
@@ -96,12 +97,64 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
           let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: descriptor) else {
       return
     }
-    orbitCamera.updateOrbit()
-    transformController.cameraDistance = orbitCamera.radius
-    transformController.cameraRight = orbitCamera.right
-    transformController.cameraUp = orbitCamera.up
-    transformController.cameraForward = orbitCamera.forward
-    var cameraUniforms = orbitCamera.makeUniforms()
+    
+    var cameraUniforms: CameraUniforms
+    if let fixedCameraId = fixedCameraId,
+       let cameraObj = scene.rootGroup.object(withId: fixedCameraId),
+       let camData = cameraObj.asCameraData {
+      
+      let hierarchical_matrix = scene.rootGroup.hierarchicalMatrix(forItemId: fixedCameraId, in: scene.rootGroup)
+      
+      // Transform camera position through hierarchy
+      let localPos = SIMD4<Float>(camData.position.x, camData.position.y, camData.position.z, 1.0)
+      let worldPos = hierarchical_matrix * localPos
+      let transformedPosition = SIMD3<Float>(worldPos.x, worldPos.y, worldPos.z) / worldPos.w
+      
+      // Transform camera orientation through hierarchy
+      let q = simd_quatf(vector: camData.orientation)
+      
+      // Extract rotation from hierarchical matrix
+      let col0 = SIMD3<Float>(hierarchical_matrix.columns.0.x, hierarchical_matrix.columns.0.y, hierarchical_matrix.columns.0.z)
+      let col1 = SIMD3<Float>(hierarchical_matrix.columns.1.x, hierarchical_matrix.columns.1.y, hierarchical_matrix.columns.1.z)
+      let col2 = SIMD3<Float>(hierarchical_matrix.columns.2.x, hierarchical_matrix.columns.2.y, hierarchical_matrix.columns.2.z)
+      
+      let scaleX = length(col0)
+      let scaleY = length(col1)
+      let scaleZ = length(col2)
+      
+      let rotationMatrix = simd_float3x3(
+        col0 / scaleX,
+        col1 / scaleY,
+        col2 / scaleZ
+      )
+      
+      let hierarchicalQuat = simd_quatf(rotationMatrix)
+      let transformedOrientation = hierarchicalQuat * q
+      
+      // Build camera matrix from transformed position and orientation
+      let positionMatrix = simd_float4x4.translation(transformedPosition)
+      let rotationMatrixFinal = simd_float4x4(transformedOrientation)
+      let cameraMatrix = positionMatrix * rotationMatrixFinal
+      
+      // View matrix is the inverse of camera matrix
+      let viewMatrix = cameraMatrix.inverse
+      
+      let drawableSize = view.drawableSize
+      let aspect = drawableSize.height > 0 ? Float(drawableSize.width / drawableSize.height) : 1.0
+      let projection = simd_float4x4.perspectiveFovRH(fovY: 90.0 * (.pi / 180.0),
+                                                      aspect: aspect,
+                                                      nearZ: 0.001,
+                                                      farZ: 300.0)
+      cameraUniforms = CameraUniforms(viewProjectionMatrix: projection * viewMatrix)
+    } else {
+      orbitCamera.updateOrbit()
+      transformController.cameraDistance = orbitCamera.radius
+      transformController.cameraRight = orbitCamera.right
+      transformController.cameraUp = orbitCamera.up
+      transformController.cameraForward = orbitCamera.forward
+      cameraUniforms = orbitCamera.makeUniforms()
+    }
+    
     cameraBuffer.contents().copyMemory(from: &cameraUniforms, byteCount: MemoryLayout<CameraUniforms>.stride)
     
     let frame = FrameContext(cameraUniforms: cameraUniforms,

@@ -12,11 +12,13 @@ final class CameraDataBlock: DataBlock, ObservableObject {
   @Published var position: SIMD3<Float> = .zero
   @Published var orientation: SIMD4<Float> = SIMD4<Float>(0.0, 0.0, 0.0, 1.0) // Identity quaternion
   @Published var fov: Float = 45.0 // Field of view in degrees
+  @Published var imagePath: String?
   
-  init(position: SIMD3<Float> = .zero, orientation: SIMD4<Float>, fov: Float = 45.0) {
+  init(position: SIMD3<Float> = .zero, orientation: SIMD4<Float>, fov: Float = 45.0, imagePath: String? = nil) {
     self.position = position
     self.orientation = orientation
     self.fov = fov
+    self.imagePath = imagePath
     super.init()
   }
   
