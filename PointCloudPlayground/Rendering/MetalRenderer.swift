@@ -105,43 +105,34 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
       
       let hierarchical_matrix = scene.rootGroup.hierarchicalMatrix(forItemId: fixedCameraId, in: scene.rootGroup)
       
-      // Transform camera position through hierarchy
-      let localPos = SIMD4<Float>(camData.position.x, camData.position.y, camData.position.z, 1.0)
-      let worldPos = hierarchical_matrix * localPos
-      let transformedPosition = SIMD3<Float>(worldPos.x, worldPos.y, worldPos.z) / worldPos.w
-      
-      // Transform camera orientation through hierarchy
       let q = simd_quatf(vector: camData.orientation)
+      let cameraMatrix = hierarchical_matrix * simd_float4x4(q)
       
-      // Extract rotation from hierarchical matrix
-      let col0 = SIMD3<Float>(hierarchical_matrix.columns.0.x, hierarchical_matrix.columns.0.y, hierarchical_matrix.columns.0.z)
-      let col1 = SIMD3<Float>(hierarchical_matrix.columns.1.x, hierarchical_matrix.columns.1.y, hierarchical_matrix.columns.1.z)
-      let col2 = SIMD3<Float>(hierarchical_matrix.columns.2.x, hierarchical_matrix.columns.2.y, hierarchical_matrix.columns.2.z)
-      
-      let scaleX = length(col0)
-      let scaleY = length(col1)
-      let scaleZ = length(col2)
-      
-      let rotationMatrix = simd_float3x3(
-        col0 / scaleX,
-        col1 / scaleY,
-        col2 / scaleZ
+      // View matrix is the inverse of camera matrix.
+      // Note: COLMAP camera uses +Z forward, +Y down, +X right.
+      // Metal RH projection expects -Z forward, +Y up, +X right.
+      // So we need to flip the Y and Z axes of the view space.
+      let colmapToMetal = simd_float4x4(
+        SIMD4<Float>(1,  0,  0, 0),
+        SIMD4<Float>(0, -1,  0, 0),
+        SIMD4<Float>(0,  0, -1, 0),
+        SIMD4<Float>(0,  0,  0, 1)
       )
       
-      let hierarchicalQuat = simd_quatf(rotationMatrix)
-      let transformedOrientation = hierarchicalQuat * q
+      var viewMatrix = colmapToMetal * cameraMatrix.inverse
+
+      let scale = SIMD3<Float>(length(SIMD3<Float>(viewMatrix.columns.0.x, viewMatrix.columns.0.y, viewMatrix.columns.0.z)),
+                               length(SIMD3<Float>(viewMatrix.columns.1.x, viewMatrix.columns.1.y, viewMatrix.columns.1.z)),
+                               length(SIMD3<Float>(viewMatrix.columns.2.x, viewMatrix.columns.2.y, viewMatrix.columns.2.z)))
       
-      // Build camera matrix from transformed position and orientation
-      let positionMatrix = simd_float4x4.translation(transformedPosition)
-      let rotationMatrixFinal = simd_float4x4(transformedOrientation)
-      let cameraMatrix = positionMatrix * rotationMatrixFinal
-      
-      // View matrix is the inverse of camera matrix
-      let viewMatrix = cameraMatrix.inverse
+      viewMatrix.columns.0 /= SIMD4<Float>(scale.x, scale.x, scale.x, 1)
+      viewMatrix.columns.1 /= SIMD4<Float>(scale.y, scale.y, scale.y, 1)
+      viewMatrix.columns.2 /= SIMD4<Float>(scale.z, scale.z, scale.z, 1)
+      viewMatrix.columns.3 /= SIMD4<Float>(scale, 1)
       
       let drawableSize = view.drawableSize
       let aspect = drawableSize.height > 0 ? Float(drawableSize.width / drawableSize.height) : 1.0
-      let projection = simd_float4x4.perspectiveFovRH(fovY: 90.0 * (.pi / 180.0),
+      let projection = simd_float4x4.perspectiveFovRH(fovY: camData.fov * (.pi / 180.0),
                                                       aspect: aspect,
                                                       nearZ: 0.001,
                                                       farZ: 300.0)
