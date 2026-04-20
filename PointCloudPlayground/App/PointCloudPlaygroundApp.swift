@@ -34,7 +34,14 @@ struct PointCloudPlaygroundApp: App {
 
     Window("Camera details", id: "camera") {
       if let cameraId = cameraId {
-        CameraOverlayView(scene: scene, cameraId: cameraId)
+        if let obj = scene.rootGroup.object(withId: cameraId),
+           let camData = obj.asCameraData,
+           let intrinsics = camData.intrinsics,
+           intrinsics.width > 0, intrinsics.height > 0 {
+          CameraOverlayView(scene: scene, cameraId: cameraId)
+        } else {
+          CameraOverlayView(scene: scene, cameraId: cameraId)
+        }
       } else {
         Text("No camera selected")
           .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -11,7 +11,16 @@ struct CameraPose {
   let imageId: Int
   let qw, qx, qy, qz: Double // Rotation Quaternion
   let tx, ty, tz: Double     // Translation Vector
+  let cameraId: Int
   let imageName: String
+}
+
+struct CameraCalibration {
+  let cameraId: Int
+  let model: String
+  let width: Int
+  let height: Int
+  let params: [Double]
 }
 
 final class ColmapImporter {
@@ -94,6 +103,7 @@ final class ColmapImporter {
             tx: Double(parts[5]) ?? 0,
             ty: Double(parts[6]) ?? 0,
             tz: Double(parts[7]) ?? 0,
+            cameraId: Int(parts[8]) ?? 0,
             imageName: String(parts[9])
           )
           poses.append(pose)
@@ -105,5 +115,33 @@ final class ColmapImporter {
       }
     }
     return poses
+  }
+
+  // Parses cameras.txt to get Camera Calibrations
+  func parseCameras(fromDirectory path: String) -> [Int: CameraCalibration] {
+    let camerasFile = (path as NSString).appendingPathComponent("cameras.txt")
+    guard let content = try? String(contentsOfFile: camerasFile, encoding: .utf8) else { return [:] }
+    
+    var cameras = [Int: CameraCalibration]()
+    
+    content.enumerateLines { line, _ in
+      if line.hasPrefix("#") || line.isEmpty { return }
+      let parts = line.split(separator: " ")
+      if parts.count >= 4, let camId = Int(parts[0]) {
+        let model = String(parts[1])
+        let width = Int(parts[2]) ?? 0
+        let height = Int(parts[3]) ?? 0
+        let params = parts[4...].compactMap { Double($0) }
+        
+        cameras[camId] = CameraCalibration(
+          cameraId: camId,
+          model: model,
+          width: width,
+          height: height,
+          params: params
+        )
+      }
+    }
+    return cameras
   }
 }

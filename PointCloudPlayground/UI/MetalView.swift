@@ -202,10 +202,26 @@ final class OrbitMTKView: MTKView {
   }
 }
 
+struct CameraOverlayImage: View {
+  @ObservedObject var camData: CameraDataBlock
+  let imagePath: String
+  let overlayOpacity: Double
+  
+  var body: some View {
+    if let nsImage = NSImage(contentsOfFile: imagePath) {
+      Image(nsImage: nsImage)
+        .resizable()
+        .aspectRatio(contentMode: .fit)
+        .opacity(overlayOpacity)
+        .allowsHitTesting(false)
+        .scaleEffect(CGFloat(camData.zoom))
+    }
+  }
+}
+
 struct CameraOverlayView: View {
   @ObservedObject var scene: PlaygroundScene
   let cameraId: UUID?
-  var imageAspectRatio: CGFloat = 1.0
   @State private var transformReferenceMode: TransformReferenceMode = .objectCenter
   @State private var overlayOpacity: Double = 0.5
   
@@ -213,15 +229,11 @@ struct CameraOverlayView: View {
     ZStack {
       MetalView(scene: scene, transformReferenceMode: $transformReferenceMode, fixedCameraId: cameraId)
       
-      if let obj = scene.rootGroup.object(withId: cameraId!),
+      if let cameraId = cameraId,
+         let obj = scene.rootGroup.object(withId: cameraId),
          let camData = obj.asCameraData,
-         let imagePath = camData.imagePath,
-         let nsImage = NSImage(contentsOfFile: imagePath) {
-        Image(nsImage: nsImage)
-          .resizable()
-          .aspectRatio(contentMode: .fit)
-          .opacity(overlayOpacity)
-          .allowsHitTesting(false)
+         let imagePath = camData.imagePath {
+        CameraOverlayImage(camData: camData, imagePath: imagePath, overlayOpacity: overlayOpacity)
       }
       
       VStack {

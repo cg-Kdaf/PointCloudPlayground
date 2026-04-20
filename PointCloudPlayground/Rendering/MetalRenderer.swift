@@ -130,13 +130,34 @@ final class MetalRenderer: NSObject, MTKViewDelegate {
       viewMatrix.columns.2 /= SIMD4<Float>(scale.z, scale.z, scale.z, 1)
       viewMatrix.columns.3 /= SIMD4<Float>(scale, 1)
       
+      let fovY: Float
+      let aspect: Float
       let drawableSize = view.drawableSize
-      let aspect = drawableSize.height > 0 ? Float(drawableSize.width / drawableSize.height) : 1.0
-      let projection = simd_float4x4.perspectiveFovRH(fovY: camData.fov * (.pi / 180.0),
+      if let intrinsics = camData.intrinsics, intrinsics.height > 0, intrinsics.fy > 0, drawableSize.height > 0 {
+        let imgW = Float(intrinsics.width)
+        let imgH = Float(intrinsics.height)
+        let drawW = Float(drawableSize.width)
+        let drawH = Float(drawableSize.height)
+        
+        let visualScale = min(drawW / imgW, drawH / imgH)
+        let virtualSensorHeight = drawH / visualScale
+        
+        fovY = 2.0 * atan(virtualSensorHeight / (2.0 * Float(intrinsics.fy)))
+        aspect = drawW / drawH
+      } else {
+        fovY = camData.fov * (.pi / 180.0)
+        aspect = drawableSize.height > 0 ? Float(drawableSize.width / drawableSize.height) : 1.0
+      }
+      
+      let projection = simd_float4x4.perspectiveFovRH(fovY: fovY,
                                                       aspect: aspect,
                                                       nearZ: 0.001,
                                                       farZ: 300.0)
-      cameraUniforms = CameraUniforms(viewProjectionMatrix: projection * viewMatrix)
+      
+      let zoomScale = simd_float4x4(diagonal: SIMD4<Float>(camData.zoom, camData.zoom, 1.0, 1.0))
+      let zoomedProjection = zoomScale * projection
+      
+      cameraUniforms = CameraUniforms(viewProjectionMatrix: zoomedProjection * viewMatrix)
     } else {
       orbitCamera.updateOrbit()
       transformController.cameraDistance = orbitCamera.radius
@@ -184,6 +205,14 @@ extension MetalRenderer {
   }
   
   func zoom(delta: Float) {
-    orbitCamera.zoom(delta: delta)
+    if let fixedCameraId = fixedCameraId,
+       let cameraObj = scene.rootGroup.object(withId: fixedCameraId),
+       let camData = cameraObj.asCameraData {
+      let sensitivity: Float = 0.01
+      camData.zoom *= (1.0 + delta * sensitivity)
+      camData.zoom = max(0.1, min(camData.zoom, 100.0))
+    } else {
+      orbitCamera.zoom(delta: delta)
+    }
   }
 }

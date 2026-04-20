@@ -175,6 +175,7 @@ final class PlaygroundScene: ObservableObject {
     // 2. Add Cameras as a New Object Type
     let camerasGroupId = addGroup(named: "Cameras", parentGroupId: colmapGroupId)
     let poses = importer.parseImages(fromDirectory: path)
+    let cameras = importer.parseCameras(fromDirectory: path)
     
     for pose in poses {
       // Colmap poses represent World-to-Camera transformations
@@ -194,7 +195,33 @@ final class PlaygroundScene: ObservableObject {
       let imgPath2 = baseDirUrl.appendingPathComponent("aiguille_midi_images").appendingPathComponent(pose.imageName).path
       let imgPath = FileManager.default.fileExists(atPath: imgPath1) ? imgPath1 : (FileManager.default.fileExists(atPath: imgPath2) ? imgPath2 : nil)
       
-      let cameraData = CameraDataBlock(position: finalPosition, orientation: orientation, imagePath: imgPath)
+      var intrinsics: CameraIntrinsics? = nil
+      if let cam = cameras[pose.cameraId] {
+        var fx: Float = 0, fy: Float = 0, cx: Float = 0, cy: Float = 0
+        
+        switch cam.model {
+        case "SIMPLE_PINHOLE", "SIMPLE_RADIAL", "RADIAL":
+          // f, cx, cy
+          fx = Float(cam.params.first ?? 0)
+          fy = fx
+          cx = Float(cam.params.indices.contains(1) ? cam.params[1] : 0)
+          cy = Float(cam.params.indices.contains(2) ? cam.params[2] : 0)
+        case "PINHOLE", "OPENCV", "OPENCV_FISHEYE", "FULL_OPENCV":
+          // fx, fy, cx, cy
+          fx = Float(cam.params.first ?? 0)
+          fy = Float(cam.params.indices.contains(1) ? cam.params[1] : 0)
+          cx = Float(cam.params.indices.contains(2) ? cam.params[2] : 0)
+          cy = Float(cam.params.indices.contains(3) ? cam.params[3] : 0)
+        default:
+          break
+        }
+        
+        if fx > 0 {
+          intrinsics = CameraIntrinsics(width: cam.width, height: cam.height, fx: fx, fy: fy, cx: cx, cy: cy)
+        }
+      }
+      
+      let cameraData = CameraDataBlock(position: finalPosition, orientation: orientation, imagePath: imgPath, intrinsics: intrinsics)
       let cameraObject = SceneObject(name: pose.imageName, dataBlock: cameraData, type: .camera)
       cameraObject.translation = finalPosition // Bind object's translation to its position
       
