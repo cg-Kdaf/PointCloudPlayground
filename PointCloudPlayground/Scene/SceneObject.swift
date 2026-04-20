@@ -14,6 +14,7 @@ class DataBlock: Codable {}
 enum DataBlockType: String, Codable {
   case pointCloud
   case camera
+  case volume
   
   var name: String {
     switch self {
@@ -21,6 +22,8 @@ enum DataBlockType: String, Codable {
       return "Point Cloud"
     case .camera:
       return "Camera"
+    case .volume:
+      return "Volume"
     }
   }
 }
@@ -57,6 +60,11 @@ final class SceneObject: Codable, ObservableObject, Identifiable, Transformable 
   var asCameraData: CameraDataBlock? {
     guard dataBlockType == .camera else { return nil }
     return data as? CameraDataBlock
+  }
+  
+  var asVolumeData: VolumeDataBlock? {
+    guard dataBlockType == .volume else { return nil }
+    return data as? VolumeDataBlock
   }
   
   enum CodingKeys: String, CodingKey {

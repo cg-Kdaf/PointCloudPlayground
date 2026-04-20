@@ -10,13 +10,15 @@ import SwiftUI
 struct ScenePropertyPanelView: View {
   var object: SceneObject?
   var pointCloudData: PointCloudDataBlock?
+  var volumeData: VolumeDataBlock?
   var group: SceneGroup?
   
   var body: some View {
     if let group = group {
       GroupPropertiesView(group: group)
-    } else if let object = object, let pointCloudData = pointCloudData {
-      ObjectPropertiesView(object: object, pointCloudData: pointCloudData)
+    } else if let object = object {
+      let volData = object.asVolumeData
+      ObjectPropertiesView(object: object, pointCloudData: pointCloudData, volumeData: volData)
     }
   }
 }

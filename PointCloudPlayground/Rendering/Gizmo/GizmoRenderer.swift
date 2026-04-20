@@ -15,6 +15,8 @@ final class GizmoRenderer {
   private var bboxVertexCount: Int = 0
   private var cameraVertexBuffer: MTLBuffer?
   private var cameraVertexCount: Int = 0
+  private var volumeVertexBuffer: MTLBuffer?
+  private var volumeVertexCount: Int = 0
   private let scene: PlaygroundScene
   
   init?(device: MTLDevice,
@@ -106,11 +108,40 @@ final class GizmoRenderer {
       encoder.setVertexBuffer(camBuffer, offset: 0, index: 0)
       encoder.drawPrimitives(type: .line, vertexStart: 0, vertexCount: cameraVertexCount)
     }
+
+    // Draw volume gizmos
+    if let volBuffer = volumeVertexBuffer, volumeVertexCount > 0 {
+      encoder.setVertexBuffer(volBuffer, offset: 0, index: 0)
+      encoder.drawPrimitives(type: .line, vertexStart: 0, vertexCount: volumeVertexCount)
+    }
   }
   
   @objc private func updateBoundingBox(_ n: Notification) {
     updateInternalBoundingBox()
     updateCameras()
+    updateVolumes()
+  }
+
+  private func updateVolumes() {
+    var allVolumeVertices: [GizmoVertex] = []
+    
+    let visibleVolumes = scene.allVisibleObjects.filter { $0.dataBlockType == .volume }
+    for volume in visibleVolumes {
+      let isSelected = scene.selectedObject?.id == volume.id
+      let matrix = scene.rootGroup.hierarchicalMatrix(forItemId: volume.id, in: scene.rootGroup)
+      
+      let volVertices = Self.makeVolumeVertices(modelMatrix: matrix, isSelected: isSelected)
+      allVolumeVertices.append(contentsOf: volVertices)
+    }
+    
+    volumeVertexCount = allVolumeVertices.count
+    if volumeVertexCount > 0 {
+      volumeVertexBuffer = device.makeBuffer(bytes: allVolumeVertices,
+                                             length: MemoryLayout<GizmoVertex>.stride * allVolumeVertices.count,
+                                             options: .storageModeShared)
+    } else {
+      volumeVertexBuffer = nil
+    }
   }
 
   private func updateCameras() {
@@ -200,6 +231,34 @@ final class GizmoRenderer {
     return lineIndices.flatMap { (a, b) in
       [GizmoVertex(position: worldPoints[a], color: color),
        GizmoVertex(position: worldPoints[b], color: color)]
+    }
+  }
+
+  private static func makeVolumeVertices(modelMatrix: simd_float4x4, isSelected: Bool) -> [GizmoVertex] {
+    let color: SIMD3<Float> = isSelected ? SIMD3<Float>(1, 0.8, 0) : SIMD3<Float>(0.2, 0.8, 0.2)
+    let lo = SIMD3<Float>(-0.5, -0.5, -0.5)
+    let hi = SIMD3<Float>( 0.5,  0.5,  0.5)
+    
+    // 8 corners: iterate over each bit pattern of (x, y, z) = lo/hi
+    let corners = (0..<8).map { i -> SIMD3<Float> in
+      let local = SIMD3<Float>(
+        (i & 1) != 0 ? hi.x : lo.x,
+        (i & 2) != 0 ? hi.y : lo.y,
+        (i & 4) != 0 ? hi.z : lo.z
+      )
+      let w = modelMatrix * SIMD4<Float>(local, 1.0)
+      return SIMD3<Float>(w.x, w.y, w.z)
+    }
+    
+    // 12 edges: pairs that differ by exactly one bit
+    let edges: [(Int, Int)] = [
+      (0,1),(2,3),(4,5),(6,7), // differ in bit 0 (x)
+      (0,2),(1,3),(4,6),(5,7), // differ in bit 1 (y)
+      (0,4),(1,5),(2,6),(3,7), // differ in bit 2 (z)
+    ]
+    return edges.flatMap { (a, b) in
+      [GizmoVertex(position: corners[a], color: color),
+       GizmoVertex(position: corners[b], color: color)]
     }
   }
 

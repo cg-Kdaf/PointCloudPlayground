@@ -9,7 +9,8 @@ import SwiftUI
 
 struct ObjectPropertiesView: View {
   @ObservedObject var object: SceneObject
-  @ObservedObject var pointCloudData: PointCloudDataBlock
+  var pointCloudData: PointCloudDataBlock?
+  var volumeData: VolumeDataBlock?
   
   var body: some View {
     VStack(alignment: .leading, spacing: 0) {
@@ -31,44 +32,80 @@ struct ObjectPropertiesView: View {
               .font(.system(.body, design: .default))
           }
           
-          Divider().padding(.vertical, 4)
-          
-          VStack(alignment: .leading, spacing: 10) {
-            Text("Appearance")
-              .font(.caption.bold())
-              .foregroundColor(.secondary)
+          if let pointCloudData = pointCloudData {
+            Divider().padding(.vertical, 4)
             
-            VStack(alignment: .leading, spacing: 8) {
-              Text("Color")
-                .font(.caption)
+            VStack(alignment: .leading, spacing: 10) {
+              Text("Appearance")
+                .font(.caption.bold())
                 .foregroundColor(.secondary)
-              HStack(spacing: 12) {
-                ColorPicker("", selection: $pointCloudData.color, supportsOpacity: true)
-                  .labelsHidden()
-                  .frame(width: 40, height: 40)
-                
-                HStack(spacing: 8) {
-                  Circle()
-                    .fill(pointCloudData.color)
-                    .frame(width: 12, height: 12)
-                  Text("Selected")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                }
-              }
-            }
-            
-            VStack(alignment: .leading, spacing: 8) {
-              HStack {
-                Text("Point Size")
+              
+              VStack(alignment: .leading, spacing: 8) {
+                Text("Color")
                   .font(.caption)
                   .foregroundColor(.secondary)
-                Spacer()
-                Text(String(format: "%.1f", pointCloudData.pointSize))
-                  .font(.caption.monospacedDigit())
-                  .fontWeight(.medium)
+                HStack(spacing: 12) {
+                  ColorPicker("", selection: Binding(
+                    get: { pointCloudData.color },
+                    set: { pointCloudData.color = $0 }
+                  ), supportsOpacity: true)
+                    .labelsHidden()
+                    .frame(width: 40, height: 40)
+                  
+                  HStack(spacing: 8) {
+                    Circle()
+                      .fill(pointCloudData.color)
+                      .frame(width: 12, height: 12)
+                    Text("Selected")
+                      .font(.caption)
+                      .foregroundColor(.secondary)
+                  }
+                }
               }
-              Slider(value: $pointCloudData.pointSize, in: 0.5...20.0)
+              
+              VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                  Text("Point Size")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                  Spacer()
+                  Text(String(format: "%.1f", pointCloudData.pointSize))
+                    .font(.caption.monospacedDigit())
+                    .fontWeight(.medium)
+                }
+                Slider(value: Binding(
+                  get: { pointCloudData.pointSize },
+                  set: { pointCloudData.pointSize = $0 }
+                ), in: 0.5...20.0)
+              }
+            }
+          } else if let volData = volumeData {
+            Divider().padding(.vertical, 4)
+            
+            VStack(alignment: .leading, spacing: 10) {
+              Text("Volume Settings")
+                .font(.caption.bold())
+                .foregroundColor(.secondary)
+              
+              HStack {
+                Text("Filtering Active")
+                  .font(.caption)
+                  .foregroundColor(.secondary)
+                Toggle("", isOn: Binding(
+                  get: { volData.isFilteringActive },
+                  set: { volData.isFilteringActive = $0 }
+                ))
+              }
+              
+              HStack {
+                Text("Color")
+                  .font(.caption)
+                  .foregroundColor(.secondary)
+                ColorPicker("", selection: Binding(
+                  get: { volData.color },
+                  set: { volData.color = $0 }
+                ))
+              }
             }
           }
           
@@ -86,28 +123,30 @@ struct ObjectPropertiesView: View {
             )
           }
           
-          Divider().padding(.vertical, 4)
-          
-          VStack(alignment: .leading, spacing: 10) {
-            Text("Information")
-              .font(.caption.bold())
-              .foregroundColor(.secondary)
+          if let pointCloudData = pointCloudData {
+            Divider().padding(.vertical, 4)
             
-            InfoRow(label: "Points", value: String(format: "%d", pointCloudData.pointsCount))
-            InfoRow(label: "Size", value: String(format: "%.2f MB", Double(pointCloudData.pointsCount) * 16 / 1_000_000))
-          }
-          
-          Divider().padding(.vertical, 4)
-          
-          VStack(alignment: .leading, spacing: 6) {
-            Text("File Path")
-              .font(.caption.bold())
-              .foregroundColor(.secondary)
-            Text(pointCloudData.filePath ?? "Unknown file path")
-              .font(.system(.caption2, design: .monospaced))
-              .foregroundColor(.secondary)
-              .lineLimit(2)
-              .truncationMode(.middle)
+            VStack(alignment: .leading, spacing: 10) {
+              Text("Information")
+                .font(.caption.bold())
+                .foregroundColor(.secondary)
+              
+              InfoRow(label: "Points", value: String(format: "%d", pointCloudData.pointsCount))
+              InfoRow(label: "Size", value: String(format: "%.2f MB", Double(pointCloudData.pointsCount) * 16 / 1_000_000))
+            }
+            
+            Divider().padding(.vertical, 4)
+            
+            VStack(alignment: .leading, spacing: 6) {
+              Text("File Path")
+                .font(.caption.bold())
+                .foregroundColor(.secondary)
+              Text(pointCloudData.filePath ?? "Unknown file path")
+                .font(.system(.caption2, design: .monospaced))
+                .foregroundColor(.secondary)
+                .lineLimit(2)
+                .truncationMode(.middle)
+            }
           }
         }
         .padding(.horizontal, 14)

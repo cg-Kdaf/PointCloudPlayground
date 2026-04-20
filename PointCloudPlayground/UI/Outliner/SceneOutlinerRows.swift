@@ -145,9 +145,9 @@ struct SceneNodeRowView: View {
       }
       .buttonStyle(.plain)
       
-      Image(systemName: "cube.fill")
+      Image(systemName: object.dataBlockType == .camera ? "camera.fill" : (object.dataBlockType == .volume ? "cube.transparent" : "cloud.fill"))
         .font(.system(size: 13))
-        .foregroundColor(.orange)
+        .foregroundColor(object.dataBlockType == .camera ? .blue : (object.dataBlockType == .volume ? .green : .orange))
         .frame(width: 18)
       
       Text(object.name)

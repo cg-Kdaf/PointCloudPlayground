@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import SwiftUI
 
 final class PlaygroundScene: ObservableObject {
   @Published var rootGroup: SceneGroup = .init(name: "Root")
@@ -75,6 +76,44 @@ final class PlaygroundScene: ObservableObject {
     return group.id
   }
   
+  func addVolume(toGroupId: UUID? = nil) -> SceneObject {
+    let data = VolumeDataBlock(color: .blue, isFilteringActive: true)
+    let object = SceneObject(name: "New Volume", dataBlock: data, type: .volume)
+    object.scale = SIMD3<Float>(10, 10, 10)
+    
+    let observationPublishers: [AnyPublisher<Void, Never>] = [
+      data.$color.map { _ in () }.eraseToAnyPublisher(),
+      data.$isFilteringActive.map { _ in () }.eraseToAnyPublisher(),
+      object.$name.map { _ in () }.eraseToAnyPublisher(),
+      object.$isVisible.map { _ in () }.eraseToAnyPublisher(),
+      object.$translation.map { _ in () }.eraseToAnyPublisher(),
+      object.$rotation.map { _ in () }.eraseToAnyPublisher(),
+      object.$scale.map { _ in () }.eraseToAnyPublisher()
+    ]
+    
+    let observation = Publishers.MergeMany(observationPublishers)
+      .receive(on: DispatchQueue.main)
+      .sink { [] _ in
+        SceneUpdate.postObjectDataBlockChanged(objectUUID: object.id)
+        SceneUpdate.postGizmoChanged()
+      }
+    
+    dataBlockObservations[object.id] = observation
+
+    if let targetId = toGroupId {
+      if rootGroup.appendObject(object, toGroupWithId: targetId) {
+        SceneUpdate.postObjectChanged(objectUUID: object.id)
+        SceneUpdate.postGizmoChanged()
+        return object
+      }
+    }
+    
+    rootGroup.objects.append(object)
+    SceneUpdate.postObjectChanged(objectUUID: object.id)
+    SceneUpdate.postGizmoChanged()
+    return object
+  }
+
   func addCloud(filepath: String, toGroupId: UUID? = nil) -> SceneObject? {
     print("Adding cloud from filepath", filepath)
     let data: PointCloudDataBlock?

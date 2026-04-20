@@ -25,12 +25,26 @@ struct PointCloudPlaygroundApp: App {
 //
   @StateObject private var scene = PlaygroundScene()
   @State private var cameraId: UUID?
+  @Environment(\.openWindow) var openWindow
   
   var body: some Scene {
     WindowGroup {
       ContentView(scene: scene, cameraIdBinding: $cameraId)
     }
+    .commands {
+      CommandMenu("Tools") {
+        Button("Run ICP on Selection") {
+          openWindow(id: "icp_tool")
+        }
+        .keyboardShortcut("I", modifiers: [.command, .shift])
+      }
+    }
 //    .modelContainer(sharedModelContainer)
+
+    Window("ICP Tool", id: "icp_tool") {
+      ICPToolView(scene: scene)
+    }
+    .restorationBehavior(.disabled)
 
     Window("Camera details", id: "camera") {
       if let cameraId = cameraId {
@@ -49,5 +63,6 @@ struct PointCloudPlaygroundApp: App {
       }
     }
     .keyboardShortcut("1")
+    .restorationBehavior(.disabled)
   }
 }

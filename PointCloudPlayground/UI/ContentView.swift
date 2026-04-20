@@ -59,6 +59,13 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
+            
+            Button("Add Volume", systemImage: "cube.transparent") {
+              let volumeObj = scene.addVolume(toGroupId: scene.selectedGroup?.id)
+              scene.setSelection(ids: [volumeObj.id])
+            }
+            .buttonStyle(.bordered)
+            
           }
           .padding(.horizontal, 12)
           .padding(.bottom, 12)

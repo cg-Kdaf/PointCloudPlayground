@@ -66,14 +66,12 @@ struct SceneOutlinerView: View {
           pointCloudData: nil,
           group: selectedGroup
         )
-      } else if let selectedObject = scene.selectedPointCloudObject {
-        if let pointCloudData = selectedObject.asPointCloudData {
+      } else if let selectedObject = scene.selectedObject {
           ScenePropertyPanelView(
             object: selectedObject,
-            pointCloudData: pointCloudData,
+            pointCloudData: selectedObject.asPointCloudData,
             group: nil
           )
-        }
       }
     }
     .background(Color(nsColor: .controlBackgroundColor))
